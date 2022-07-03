@@ -1,20 +1,32 @@
 plugins {
     id 'java'
+    id 'application'
     id 'com.github.johnrengelman.shadow' version '7.0.0'
 }
 
 group 'dev.mayuna'
-version '1.0'
+version 'b1.0'
+mainClassName = "dev.mayuna.modularbot.ModularBot"
 
 repositories {
     mavenCentral()
+
+    maven { url "https://m2.chew.pro/snapshots" }
 }
 
 dependencies {
     // JDA
-    implementation('net.dv8tion:JDA:5.0.0-alpha.12') {
+    implementation('net.dv8tion:JDA:5.0.0-alpha.13') {
         exclude module: 'opus-java'
     }
+
+    // JDA Chewutils
+    implementation "pw.chew:jda-chewtils:2.0-SNAPSHOT"
+
+    // Personal libraries
+    implementation 'dev.mayuna:mayus-jda-utilities:2.5.4'
+    implementation 'dev.mayuna:mayus-library:2.0.1'
+    implementation 'dev.mayuna:mayus-json-utilities:1.3.1'
 
     // SLF4J
     implementation 'org.apache.logging.log4j:log4j-slf4j-impl:2.17.2'
@@ -24,15 +36,34 @@ dependencies {
     // GSON
     implementation 'com.google.code.gson:gson:2.9.0'
 
-    // Lombok
-    compileOnly 'org.projectlombok:lombok:1.18.24'
-    annotationProcessor 'org.projectlombok:lombok:1.18.24'
-
-    // JetBrains annatations
-    implementation 'org.jetbrains:annotations:23.0.0'
+    // SQLite
+    implementation 'org.xerial:sqlite-jdbc:3.36.0.3'
 
     // JCL2
     implementation 'org.xeustechnologies:jcl-core:2.8'
+
+    // Javassist
+    implementation 'org.javassist:javassist:3.29.0-GA'
+
+    // HikariCP
+    implementation 'com.zaxxer:HikariCP:5.0.1'
+
+    // MySQL
+    implementation 'mysql:mysql-connector-java:8.0.29'
+
+    // Lombok
+    compileOnly 'org.projectlombok:lombok:1.18.24'
+    annotationProcessor 'org.projectlombok:lombok:1.18.24'
+    testCompileOnly 'org.projectlombok:lombok:1.18.24'
+    testAnnotationProcessor 'org.projectlombok:lombok:1.18.24'
+
+    // Apache Commons Lang
+    testImplementation 'org.apache.commons:commons-lang3:3.12.0'
+
+    // JUnit
+    testImplementation 'org.junit.platform:junit-platform-launcher:1.8.2'
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
 }
 
 tasks.withType(JavaCompile) {
@@ -47,3 +78,8 @@ shadowJar {
     }
 }
 
+test {
+    useJUnitPlatform();
+}
+
+shadowJar.dependsOn(test)
