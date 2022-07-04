@@ -206,7 +206,7 @@ public class ModularBot {
 
     public static class Values {
 
-        public static final String APP_VERSION = "b1.0";
+        public static final String APP_VERSION = "b1.1";
         private static @Getter @Setter String pathFolderModules = "./modules/";
         private static @Getter @Setter String pathFolderJsonData = "./json_data/";
         private static @Getter @Setter String fileNameConfig = "./modular_bot.json";
