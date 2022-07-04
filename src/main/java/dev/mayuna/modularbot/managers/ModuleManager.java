@@ -324,10 +324,6 @@ public class ModuleManager {
         modules.forEach(module -> module.onShardManagerBuilderInitialization(shardManagerBuilder));
     }
 
-    public void processGenericEvent(GenericEvent genericEvent) {
-        modules.forEach(module -> module.onGenericEvent(genericEvent));
-    }
-
     public void processException(Throwable throwable) {
         modules.forEach(module -> {
             try {

@@ -16,23 +16,12 @@ import java.util.TimerTask;
 
 public class GlobalRateLimiter {
 
-    private final @Getter ShardManager shardManager;
-    private final Timer resetTimer;
+    private final @Getter Timer resetTimer = new Timer();
     private @Getter int requests;
 
     private final Object mutex = new Object();
 
-    public GlobalRateLimiter(ShardManager shardManager) {
-        this.shardManager = shardManager;
-
-        shardManager.getShardCache().forEach(jda -> {
-            if (jda instanceof JDAImpl jdaImpl) {
-                hijackIntoRequester(jdaImpl);
-            }
-        });
-
-        resetTimer = new Timer();
-
+    public GlobalRateLimiter() {
         resetTimer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
@@ -42,6 +31,12 @@ public class GlobalRateLimiter {
                 }
             }
         }, 0, Config.getInstance().getBot().getGlobalRateLimiter().getResetRequestsCountAfter());
+    }
+
+    public void processJda(JDA jda) {
+        if (jda instanceof JDAImpl jdaImpl) {
+            hijackIntoRequester(jdaImpl);
+        }
     }
 
     public boolean isGloballyRateLimited() {

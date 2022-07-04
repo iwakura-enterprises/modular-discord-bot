@@ -1,5 +1,10 @@
 package dev.mayuna.modularbot.managers;
 
+import com.google.common.eventbus.Subscribe;
+import dev.mayuna.modularbot.ModularBot;
+import dev.mayuna.modularbot.events.AllShardsStartedEvent;
+import dev.mayuna.modularbot.events.ShardRebootedEvent;
+import dev.mayuna.modularbot.events.ShardStartedEvent;
 import dev.mayuna.modularbot.logging.Logger;
 import dev.mayuna.modularbot.utils.Config;
 import dev.mayuna.modularbot.utils.GeneralUtil;
@@ -7,10 +12,10 @@ import dev.mayuna.modularbot.utils.GlobalRateLimiter;
 import lombok.Getter;
 import lombok.NonNull;
 import net.dv8tion.jda.api.JDA;
-import net.dv8tion.jda.api.events.GenericEvent;
+import net.dv8tion.jda.api.events.GatewayPingEvent;
 import net.dv8tion.jda.api.sharding.ShardManager;
-import org.jetbrains.annotations.NotNull;
 
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -21,14 +26,15 @@ public class WrappedShardManager {
 
     private final @Getter ShardManager instance;
     private final @Getter GlobalRateLimiter globalRateLimiter;
-    private Timer shardRestartTimer;
+    private final @Getter Timer shardRestartTimer = new Timer("SHARD-REBOOTER");
 
     public WrappedShardManager(ShardManager instance) {
         this.instance = instance;
+        ModularBot.getGlobalEventBus().register(new ShardListener());
 
         if (Config.getInstance().getBot().getGlobalRateLimiter().isEnabled()) {
             Logger.info("Enabling custom Global Rate Limiter...");
-            globalRateLimiter = new GlobalRateLimiter(instance);
+            globalRateLimiter = new GlobalRateLimiter();
         } else {
             globalRateLimiter = null;
         }
@@ -37,14 +43,12 @@ public class WrappedShardManager {
     /**
      * Initializes timer which restarts disconnected shards if the config value of "restartShardEveryIfNecessary" is larger than zero
      */
-    public void initShardRestartSchedule() {
+    private void initShardRestartSchedule() {
         long restartShardEveryIfNecessary = Config.getInstance().getBot().getRestartShardEveryIfNecessary();
 
         if (restartShardEveryIfNecessary <= 0) {
             return;
         }
-
-        shardRestartTimer = new Timer();
 
         shardRestartTimer.scheduleAtFixedRate(new TimerTask() {
             @Override
@@ -53,7 +57,7 @@ public class WrappedShardManager {
                 restartShardsIfNotConnected();
                 Logger.debug("Checking for offline shards done.");
             }
-        }, 0, restartShardEveryIfNecessary);
+        }, restartShardEveryIfNecessary, restartShardEveryIfNecessary);
     }
 
     /**
@@ -196,15 +200,49 @@ public class WrappedShardManager {
 
                 Logger.warn("Restarting disconnected Shard " + shardId + "...");
                 instance.restart(shard.getShardInfo().getShardId());
+                ModularBot.getGlobalEventBus().post(new ShardRebootedEvent(shard));
             }
         }
     }
 
-    public static class EventListener implements net.dv8tion.jda.api.hooks.EventListener {
+    protected class ShardListener {
 
-        @Override
-        public void onEvent(@NonNull GenericEvent event) {
-            ModuleManager.getInstance().processGenericEvent(event);
+        private List<Integer> startedShards = new LinkedList<>();
+        private boolean shouldCheckForNewShards = true;
+
+        @Subscribe
+        public void onGatewayPing(GatewayPingEvent event) {
+            if (!shouldCheckForNewShards) {
+                return;
+            }
+
+            JDA shard = event.getEntity();
+            int shardId = shard.getShardInfo().getShardId();
+
+            if (!startedShards.contains(shardId)) {
+                startedShards.add(shardId);
+
+                if (globalRateLimiter != null) {
+                    globalRateLimiter.processJda(shard);
+                }
+
+                ModularBot.getGlobalEventBus().post(new ShardStartedEvent(shard));
+
+                if (didAllShardsStart(Config.getInstance().getBot().getTotalShards())) {
+                    shouldCheckForNewShards = false;
+                    startedShards = null;
+                    ModularBot.getGlobalEventBus().post(new AllShardsStartedEvent());
+                }
+            }
+        }
+
+        @Subscribe
+        public void onAllShardsStarted(AllShardsStartedEvent event) {
+            ModularBot.getWrappedShardManager().initShardRestartSchedule();
+        }
+
+        protected boolean didAllShardsStart(int totalShards) {
+            return startedShards.size() == totalShards;
         }
     }
 }

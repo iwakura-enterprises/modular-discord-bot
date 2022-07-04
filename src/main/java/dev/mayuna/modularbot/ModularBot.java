@@ -1,11 +1,13 @@
 package dev.mayuna.modularbot;
 
+import com.google.common.eventbus.EventBus;
 import com.jagrosh.jdautilities.command.CommandClientBuilder;
 import dev.mayuna.mayusjdautils.data.MayuCoreListener;
 import dev.mayuna.mayuslibrary.exceptionreporting.ExceptionListener;
 import dev.mayuna.mayuslibrary.exceptionreporting.ExceptionReporter;
 import dev.mayuna.modularbot.console.ConsoleCommandManager;
 import dev.mayuna.modularbot.console.commands.generic.AbstractConsoleCommand;
+import dev.mayuna.modularbot.listeners.GlobalListener;
 import dev.mayuna.modularbot.logging.Logger;
 import dev.mayuna.modularbot.managers.DataManager;
 import dev.mayuna.modularbot.managers.ModuleManager;
@@ -19,6 +21,7 @@ import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder;
 public class ModularBot {
 
     private static final @Getter DataManager dataManager = new DataManager();
+    private static final @Getter EventBus globalEventBus = new EventBus("modular_bot-global");
     private static @Getter @Setter boolean stopping;
     private static @Getter @Setter boolean dontSaveData = false;
     private static @Getter WrappedShardManager wrappedShardManager;
@@ -115,8 +118,8 @@ public class ModularBot {
         var shardManagerBuilder = DefaultShardManagerBuilder.createLight(Config.getInstance().getBot().getToken())
                                                             .setShardsTotal(Config.getInstance().getBot().getTotalShards())
                                                             .addEventListeners(commandClientBuilder.build())
-                                                            .addEventListeners(new WrappedShardManager.EventListener())
-                                                            .addEventListeners(new MayuCoreListener());
+                                                            .addEventListeners(new MayuCoreListener())
+                                                            .addEventListeners(new GlobalListener());
 
         ModuleManager.getInstance().processShardBuilder(shardManagerBuilder);
 

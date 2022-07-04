@@ -36,6 +36,9 @@ dependencies {
     // GSON
     implementation 'com.google.code.gson:gson:2.9.0'
 
+    // Guava
+    implementation 'com.google.guava:guava:31.1-jre'
+
     // SQLite
     implementation 'org.xerial:sqlite-jdbc:3.36.0.3'
 
@@ -82,4 +85,4 @@ test {
     useJUnitPlatform();
 }
 
-shadowJar.dependsOn(test)
+// shadowJar.dependsOn(test)
