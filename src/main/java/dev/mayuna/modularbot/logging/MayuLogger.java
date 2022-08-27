@@ -20,7 +20,7 @@ public final class MayuLogger extends ExtendedLoggerWrapper {
 
     private static final long serialVersionUID = 12093312991200L;
     private static final String FQCN = MayuLogger.class.getName();
-    private static final Level FLOW = Level.forName("FLOW", 550);
+    private static final Level FLOW = Level.forName("FLOW", 480); // 550
     private static final Level SUCCESS = Level.forName("SUCCESS", 420);
     private static final Level MDEBUG = Level.forName("MDEBUG", 450);
     private final ExtendedLoggerWrapper logger;

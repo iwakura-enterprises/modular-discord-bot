@@ -5,7 +5,7 @@ import org.apache.logging.log4j.Level;
 
 public class Logger {
 
-    private static final MayuLogger logger = MayuLogger.create(ModularBot.class);
+    private static final MayuLogger logger = MayuLogger.create("SYSTEM"); // [2D
 
     public static void info(String msg) {
         logger.info(msg);

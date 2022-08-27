@@ -1,26 +1,25 @@
 package dev.mayuna.modularbot.managers;
 
+import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.jagrosh.jdautilities.command.CommandClientBuilder;
 import dev.mayuna.modularbot.ModularBot;
 import dev.mayuna.modularbot.logging.Logger;
 import dev.mayuna.modularbot.logging.MayuLogger;
 import dev.mayuna.modularbot.objects.Module;
+import dev.mayuna.modularbot.objects.ModuleConfig;
 import dev.mayuna.modularbot.objects.ModuleInfo;
 import dev.mayuna.modularbot.objects.ModuleStatus;
+import dev.mayuna.modularbot.utils.CustomJarClassLoader;
+import dev.mayuna.modularbot.utils.ZipUtil;
 import lombok.Getter;
 import lombok.NonNull;
-import net.dv8tion.jda.api.events.GenericEvent;
 import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder;
-import org.xeustechnologies.jcl.JarClassLoader;
 import org.xeustechnologies.jcl.JclObjectFactory;
 
 import java.io.*;
-import java.lang.reflect.Method;
-import java.net.URL;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 public class ModuleManager {
@@ -28,7 +27,7 @@ public class ModuleManager {
     private static ModuleManager instance;
 
     private final @Getter List<Module> modules = Collections.synchronizedList(new LinkedList<>());
-    private final @Getter JarClassLoader jarClassLoader = new JarClassLoader();
+    private final @Getter CustomJarClassLoader jarClassLoader = new CustomJarClassLoader();
     private final @Getter JclObjectFactory jclObjectFactory = JclObjectFactory.getInstance();
 
     private ModuleManager() {
@@ -45,6 +44,21 @@ public class ModuleManager {
         }
 
         return instance;
+    }
+
+    ///////////////
+    // Utilities //
+    ///////////////
+
+    /**
+     * Determines if the module is loaded (is in {@link #modules} list
+     *
+     * @param moduleName Module name
+     *
+     * @return True if the specified module is loaded, false otherwise
+     */
+    public boolean isModuleLoaded(String moduleName) {
+        return getModuleByName(moduleName).orElse(null) != null;
     }
 
     /////////////
@@ -96,66 +110,61 @@ public class ModuleManager {
         long start = System.currentTimeMillis();
 
         for (File file : files) {
+            if (file.isDirectory()) {
+                continue;
+            }
+
+            if (!file.getName().endsWith(".jar")) {
+                continue;
+            }
+
             Logger.debug("Loading file/module " + file.getName() + "...");
             jarClassLoader.add(file.getAbsolutePath());
 
-            zip_file_read:
             try (ZipFile zipFile = new ZipFile(file)) {
-                Enumeration<? extends ZipEntry> zipEntries = zipFile.entries();
+                InputStream moduleInfoStream = ZipUtil.openFileAsInputStream(zipFile, ModularBot.Values.getFileNameModuleInfo());
 
-                while (zipEntries.hasMoreElements()) {
-                    ZipEntry zipEntry = zipEntries.nextElement();
-                    String fileName = zipEntry.getName();
-
-                    if (ModularBot.Values.getFileNameModuleInfo().equals(fileName)) {
-                        InputStream inputStream = zipFile.getInputStream(zipEntry);
-
-                        try {
-                            String fileContent = new BufferedReader(new InputStreamReader(inputStream)).lines().collect(Collectors.joining("\n"));
-                            ModuleInfo moduleInfo = ModuleInfo.loadFromJsonObject(JsonParser.parseString(fileContent).getAsJsonObject());
-
-                            try {
-                                Module module = (Module) jclObjectFactory.create(jarClassLoader, moduleInfo.mainClass());
-                                module.setModuleInfo(moduleInfo);
-                                module.setModuleStatus(ModuleStatus.NOT_LOADED);
-                                module.setLogger(MayuLogger.create(module.getModuleInfo().name()));
-
-                                //loadJarToClasspath(file);
-                                loadModule(module);
-                                break zip_file_read;
-                            } catch (Exception exception) {
-                                throw new RuntimeException("Exception occurred while loading Main Class for file/module " + file.getName() + "!", exception);
-                            }
-                        } catch (Exception exception) {
-                            throw new IOException("Exception occurred while reading " + fileName + " contents within file/module " + file.getName() + "!", exception);
-                        }
-                    }
+                if (moduleInfoStream == null) {
+                    Logger.error("File " + file.getName() + " does not contain module_info.json file! Cannot load this file/module, however it will be still loaded in classpath.");
+                    continue;
                 }
 
-                Logger.error("File " + file.getName() + " does not contain module_info.json file! Cannot load this file/module.");
+                String moduleInfoFileContent = new BufferedReader(new InputStreamReader(moduleInfoStream)).lines().collect(Collectors.joining("\n"));
+                ModuleInfo moduleInfo = ModuleInfo.loadFromJsonObject(JsonParser.parseString(moduleInfoFileContent).getAsJsonObject());
+
+                JsonObject defaultConfig = null;
+                InputStream defaultConfigStream = ZipUtil.openFileAsInputStream(zipFile, ModularBot.Values.getFileNameModuleConfig());
+
+                if (defaultConfigStream != null) {
+                    String defaultConfigFileContent = new BufferedReader(new InputStreamReader(defaultConfigStream)).lines()
+                                                                                                                    .collect(Collectors.joining("\n"));
+
+                    defaultConfig = JsonParser.parseString(defaultConfigFileContent).getAsJsonObject();
+                }
+
+                try {
+                    Module module = (Module) jclObjectFactory.create(jarClassLoader, moduleInfo.mainClass());
+                    module.setModuleInfo(moduleInfo);
+                    module.setModuleStatus(ModuleStatus.NOT_LOADED);
+                    module.setModuleConfig(new ModuleConfig(module, defaultConfig));
+                    module.setLogger(MayuLogger.create(module.getModuleInfo().name()));
+
+                    loadModule(module);
+                } catch (Exception exception) {
+                    throw new RuntimeException("Exception occurred while loading Main Class for file/module " + file.getName() + "!", exception);
+                }
+            } catch (Exception exception) {
+                throw new RuntimeException("There was some error while loading file/module " + file.getName() + "!", exception);
             }
         }
 
         Logger.success("Loaded " + modules.size() + " modules in " + (System.currentTimeMillis() - start) + "ms!");
     }
 
-    private static synchronized void loadJarToClasspath(File file) throws Exception {
-        ClassLoader classLoader = ClassLoader.getSystemClassLoader();
-        try {
-            Method method = classLoader.getClass().getDeclaredMethod("addURL", URL.class);
-            method.setAccessible(true);
-            method.invoke(classLoader, file.toURI().toURL());
-        } catch (NoSuchMethodException e) {
-            Method method = classLoader.getClass().getDeclaredMethod("appendToClassPathForInstrumentation", String.class);
-            method.setAccessible(true);
-            method.invoke(classLoader, file.getAbsolutePath());
-        }
-    }
-
     /**
-     * Loads module
+     * Loads a module by calling its onLoad() method.
      *
-     * @param module Base module
+     * @param module The module to load.
      */
     private synchronized void loadModule(Module module) {
         String moduleName = module.getModuleInfo().name();

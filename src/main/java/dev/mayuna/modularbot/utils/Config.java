@@ -4,6 +4,9 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import dev.mayuna.modularbot.ModularBot;
 import dev.mayuna.modularbot.logging.Logger;
+import dev.mayuna.pumpk1n.api.StorageHandler;
+import dev.mayuna.pumpk1n.impl.FolderStorageHandler;
+import dev.mayuna.pumpk1n.impl.SQLiteStorageHandler;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -94,10 +97,27 @@ public class Config {
 
     public static class Data {
 
-        protected @Getter boolean lazyLoading = true;
-        protected @Getter boolean haltIfEncounteredUnknownClass = true;
-        protected @Getter Format format = Format.JSON; // SQL, H2, JSON
+        protected @Getter Format format = Format.JSON;
         protected @Getter SQL sql = new SQL();
+
+        public StorageHandler getStorageHandler() {
+            switch (format) {
+                case SQL -> {
+                    throw new RuntimeException("Not implemented, yet!"); // TODO: Implement
+                }
+                case SQLITE -> {
+                    return new SQLiteStorageHandler(SQLiteStorageHandler.Settings.Builder.create()
+                                                            .setFileName(sql.getDatabase() + ".db")
+                                                            .setTableName(sql.getTables().getDataHolders())
+                                                            .build());
+                }
+                case JSON -> {
+                    return new FolderStorageHandler(ModularBot.Values.getPathFolderJsonData());
+                }
+            }
+
+            return null;
+        }
 
         public static class SQL {
 

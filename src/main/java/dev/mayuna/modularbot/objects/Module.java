@@ -11,6 +11,7 @@ public abstract class Module {
 
     private @Getter @Setter ModuleInfo moduleInfo;
     private @Getter @Setter ModuleStatus moduleStatus;
+    private @Getter @Setter ModuleConfig moduleConfig;
     private @Getter @Setter MayuLogger logger;
 
     /**
