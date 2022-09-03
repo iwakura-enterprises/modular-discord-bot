@@ -75,8 +75,13 @@ public class ModularBot {
 
         Logger.info("Loading data manager...");
         dataManager = new DataManager(Config.getInstance().getData().getStorageHandler());
+        Logger.info("Preparing storage...");
         dataManager.prepareStorage();
+        Logger.info("Trickery for Pumpk1n to see loaded classes from modules...");
         CustomJarClassLoader.processDataManager(dataManager);
+
+        Logger.info("Loading global data holder...");
+        dataManager.getGlobalDataHolder();
 
         try {
             ModuleManager.getInstance().enableModules();
@@ -84,9 +89,6 @@ public class ModularBot {
             Logger.get().fatal("Exception occurred while enabling modules! Cannot proceed.", exception);
             shutdownGracefully();
         }
-
-        Logger.info("Loading global data holder...");
-        dataManager.getGlobalDataHolder();
 
         initJDAUtilities();
         initJDA();

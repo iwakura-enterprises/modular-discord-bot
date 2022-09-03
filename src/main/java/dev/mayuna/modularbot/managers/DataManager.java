@@ -9,7 +9,7 @@ import java.util.UUID;
 
 public class DataManager extends Pumpk1n {
 
-    public static final UUID GLOBAL_DATA_HOLDER_UUID = UUID.nameUUIDFromBytes(new byte[]{0});
+    public static final UUID GLOBAL_DATA_HOLDER_UUID = UUID.fromString("00000000-0000-0000-0000-000000000000");
 
     public DataManager(StorageHandler storageHandler) {
         super(storageHandler);
@@ -18,7 +18,7 @@ public class DataManager extends Pumpk1n {
     /**
      * {@inheritDoc}
      *
-     * @throws IllegalArgumentException If the argument is 93b885ad-fe0d-3089-8df6-34904fd59f71 (this UUID is reserved)
+     * @throws IllegalArgumentException If the argument is {@link #GLOBAL_DATA_HOLDER_UUID}
      */
     @Override
     public @NonNull DataHolder getOrCreateDataHolder(@NonNull UUID uuid) {
@@ -30,9 +30,9 @@ public class DataManager extends Pumpk1n {
     }
 
     /**
-     * Gets the global {@link DataHolder}
+     * Gets the global {@link DataHolder} with {@link #GLOBAL_DATA_HOLDER_UUID}
      *
-     * @return Non-null {@link DataHolder} (if Global Data Holder does not exist, it creates new one with ID {@link Long#MIN_VALUE}
+     * @return Non-null {@link DataHolder}
      */
     public @NonNull DataHolder getGlobalDataHolder() {
         return super.getOrCreateDataHolder(GLOBAL_DATA_HOLDER_UUID);
