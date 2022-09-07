@@ -27,8 +27,8 @@ public class ModuleManager {
     private static ModuleManager instance;
 
     private final @Getter List<Module> modules = Collections.synchronizedList(new LinkedList<>());
-    private final @Getter CustomJarClassLoader jarClassLoader = new CustomJarClassLoader();
     private final @Getter JclObjectFactory jclObjectFactory = JclObjectFactory.getInstance();
+    private @Getter CustomJarClassLoader jarClassLoader = new CustomJarClassLoader();
 
     private ModuleManager() {
     }
@@ -166,7 +166,7 @@ public class ModuleManager {
      *
      * @param module The module to load.
      */
-    private synchronized void loadModule(Module module) {
+    public synchronized void loadModule(Module module) {
         String moduleName = module.getModuleInfo().name();
 
         if (module.getModuleStatus() != ModuleStatus.NOT_LOADED) {
@@ -184,7 +184,10 @@ public class ModuleManager {
             return;
         }
 
-        modules.add(module);
+        if (!modules.contains(module)) {
+            modules.add(module);
+        }
+
         module.setModuleStatus(ModuleStatus.LOADED);
         Logger.debug("Module " + moduleName + " loaded successfully.");
     }
@@ -220,7 +223,7 @@ public class ModuleManager {
         });
     }
 
-    private synchronized void enableModule(Module module) {
+    public synchronized void enableModule(Module module) {
         if (module.getModuleStatus() == ModuleStatus.ENABLED) {
             return;
         }
@@ -267,7 +270,7 @@ public class ModuleManager {
      *
      * @param module Base module
      */
-    private synchronized void unloadModule(Module module) {
+    public synchronized void unloadModule(Module module) {
         String moduleName = module.getModuleInfo().name();
 
         switch (module.getModuleStatus()) {
@@ -317,6 +320,7 @@ public class ModuleManager {
         long start = System.currentTimeMillis();
 
         modules.forEach(this::unloadModule);
+        jarClassLoader = new CustomJarClassLoader();
 
         Logger.success("Unloaded " + size + " modules in " + (System.currentTimeMillis() - start) + "ms!");
     }

@@ -25,7 +25,7 @@ public class ModularBot {
     private static @Getter @Setter boolean stopping;
     private static @Getter @Setter boolean dontSaveData = false;
     private static @Getter WrappedShardManager wrappedShardManager;
-    private static CommandClientBuilder commandClientBuilder;
+    private static @Getter CommandClientBuilder commandClientBuilder;
 
     /**
      * Main function of ModularBot
@@ -175,13 +175,24 @@ public class ModularBot {
      * Shutdowns Modular Discord Bot gracefully. Run this if you want to stop this application!
      */
     public static void shutdownGracefully() {
+        restartBot(true);
+    }
+
+    public static void restartBot(boolean shutdown) {
         ModularBot.setStopping(true);
 
         Logger.info("Shutting down Modular Discord Bot gracefully...");
 
         doAllShutdownProcedures();
 
-        System.exit(0);
+        if (shutdown) {
+            System.exit(0);
+        } else {
+            Logger.warn("Restarting can cause issues. Use at your own risk!");
+            new Thread(() -> {
+                ModularBot.main(null);
+            }).start();
+        }
     }
 
     private static void doAllShutdownProcedures() {

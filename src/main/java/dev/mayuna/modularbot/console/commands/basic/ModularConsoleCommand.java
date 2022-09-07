@@ -7,17 +7,20 @@ import dev.mayuna.modularbot.console.commands.generic.CommandResult;
 import dev.mayuna.modularbot.logging.Logger;
 import dev.mayuna.modularbot.managers.ModuleManager;
 import dev.mayuna.modularbot.managers.WrappedShardManager;
+import dev.mayuna.modularbot.objects.Module;
 import dev.mayuna.modularbot.objects.ModuleInfo;
+import dev.mayuna.modularbot.objects.ModuleStatus;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.sharding.ShardManager;
 
+import java.io.IOException;
 import java.util.List;
 
 public class ModularConsoleCommand extends AbstractConsoleCommand {
 
     public ModularConsoleCommand() {
         this.name = "modular";
-        this.syntax = "<modules(m)[disable(d) <module>|enable(e) <module>]|shards(s)[verbose(v)]>";
+        this.syntax = "<modules(m)[unload(u) <module>|load(l) <module>|reload(r)]|shards(s)[verbose(v)]|restart(r)>";
     }
 
     @Override
@@ -34,19 +37,22 @@ public class ModularConsoleCommand extends AbstractConsoleCommand {
 
                 if (argumentParser.hasArgumentAtIndex(1)) {
                     switch (argumentParser.getArgumentAtIndex(1).getValue()) {
-                        case "disable", "d" -> {
+                        case "unload", "u" -> {
                             if (!argumentParser.hasArgumentAtIndex(2)) {
                                 return CommandResult.INCORRECT_SYNTAX;
                             }
 
-                            throw new RuntimeException("This feature is not implemented.");
+                            return processModuleDisable(argumentParser);
                         }
-                        case "enable", "e" -> {
+                        case "load", "l" -> {
                             if (!argumentParser.hasArgumentAtIndex(2)) {
                                 return CommandResult.INCORRECT_SYNTAX;
                             }
 
-                            throw new RuntimeException("This feature is not implemented.");
+                            return processModuleEnable(argumentParser);
+                        }
+                        case "reload", "r" -> {
+                            return processModuleReload(argumentParser);
                         }
                     }
                 }
@@ -73,9 +79,11 @@ public class ModularConsoleCommand extends AbstractConsoleCommand {
                             Logger.info("");
                             wrappedShardManager.getInstance().getShardCache().forEach(jda -> {
                                 if (jda.getStatus() != JDA.Status.CONNECTED) {
-                                    Logger.warn("- [" + jda.getShardInfo().getShardId() + "] -> " + jda.getStatus() + " (" + jda.getGuildCache().size() + " guilds)");
+                                    Logger.warn("- [" + jda.getShardInfo().getShardId() + "] -> " + jda.getStatus() + " (" + jda.getGuildCache()
+                                                                                                                                .size() + " guilds)");
                                 } else {
-                                    Logger.info("- [" + jda.getShardInfo().getShardId() + "] -> " + jda.getStatus() + " (" + jda.getGuildCache().size() + " guilds)");
+                                    Logger.info("- [" + jda.getShardInfo().getShardId() + "] -> " + jda.getStatus() + " (" + jda.getGuildCache()
+                                                                                                                                .size() + " guilds)");
                                 }
                             });
 
@@ -95,11 +103,65 @@ public class ModularConsoleCommand extends AbstractConsoleCommand {
                     Logger.success("All shards are connected.");
                 }
             }
+            case "restart", "r" -> {
+                ModularBot.restartBot(false);
+            }
             default -> {
                 return CommandResult.INCORRECT_SYNTAX;
             }
         }
 
+        return CommandResult.SUCCESS;
+    }
+
+    private CommandResult processModuleDisable(ArgumentParser argumentParser) {
+        String moduleName = argumentParser.getAllArgumentsAfterIndex(2).getValue();
+        Module module = ModularBot.getModuleManager().getModuleByName(moduleName).orElse(null);
+
+        if (module == null) {
+            Logger.error("Module " + moduleName + " is not loaded or could not be found.");
+            return CommandResult.SUCCESS;
+        }
+
+        ModularBot.getModuleManager().unloadModule(module);
+        return CommandResult.SUCCESS;
+    }
+
+    private CommandResult processModuleEnable(ArgumentParser argumentParser) {
+        String moduleName = argumentParser.getAllArgumentsAfterIndex(2).getValue();
+        Module module = ModularBot.getModuleManager().getModuleByName(moduleName).orElse(null);
+
+        if (module == null) {
+            Logger.error("Module " + moduleName + " is not loaded or could not be found.");
+            Logger.warn("Loading specific modules from jars is not currently supported. Use must use reload subcommand.");
+            return CommandResult.SUCCESS;
+        }
+
+        ModularBot.getModuleManager().loadModule(module);
+        ModularBot.getModuleManager().enableModule(module);
+        return CommandResult.SUCCESS;
+    }
+
+    private CommandResult processModuleReload(ArgumentParser argumentParser) {
+        if (!argumentParser.hasArgumentAtIndex(2)) {
+
+            Logger.info("Unloading all modules...");
+            ModularBot.getModuleManager().unloadModules();
+
+            try {
+                ModularBot.getModuleManager().loadModules();
+            } catch (Exception exception) {
+                Logger.throwing(exception);
+                Logger.error("There was an exception while loading modules!");
+            }
+
+            return CommandResult.SUCCESS;
+        }
+
+        processModuleDisable(argumentParser);
+        processModuleEnable(argumentParser);
+
+        Logger.warn("If you want to (re)load commands or events, you must restart the bot.");
         return CommandResult.SUCCESS;
     }
 }
