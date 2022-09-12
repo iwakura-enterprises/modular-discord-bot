@@ -1,6 +1,7 @@
 package dev.mayuna.modularbot.objects;
 
 import com.jagrosh.jdautilities.command.CommandClientBuilder;
+import dev.mayuna.modularbot.concurrent.ModularScheduler;
 import dev.mayuna.modularbot.logging.MayuLogger;
 import lombok.Getter;
 import lombok.NonNull;
@@ -13,6 +14,8 @@ public abstract class Module {
     private @Getter @Setter ModuleStatus moduleStatus;
     private @Getter @Setter ModuleConfig moduleConfig;
     private @Getter @Setter MayuLogger logger;
+
+    private @Getter @Setter ModularScheduler scheduler;
 
     /**
      * This method is called when the module is loaded

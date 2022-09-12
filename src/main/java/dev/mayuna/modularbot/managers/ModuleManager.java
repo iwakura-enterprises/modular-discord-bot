@@ -4,6 +4,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.jagrosh.jdautilities.command.CommandClientBuilder;
 import dev.mayuna.modularbot.ModularBot;
+import dev.mayuna.modularbot.concurrent.ModularScheduler;
 import dev.mayuna.modularbot.logging.Logger;
 import dev.mayuna.modularbot.logging.MayuLogger;
 import dev.mayuna.modularbot.objects.Module;
@@ -147,6 +148,7 @@ public class ModuleManager {
                     module.setModuleInfo(moduleInfo);
                     module.setModuleStatus(ModuleStatus.NOT_LOADED);
                     module.setModuleConfig(new ModuleConfig(module, defaultConfig));
+                    module.setScheduler(new ModularScheduler(module));
                     module.setLogger(MayuLogger.create(module.getModuleInfo().name()));
 
                     loadModule(module);
@@ -297,6 +299,7 @@ public class ModuleManager {
 
                 try {
                     module.onDisable();
+                    module.getScheduler().cancelTasks();
                 } catch (Exception disableException) {
                     Logger.get().error("Exception occurred while disabling module " + moduleName + "!", disableException);
                 }
