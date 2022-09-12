@@ -53,6 +53,7 @@ public class ModularTimer implements ModularTask {
         instance.purge();
         running = false;
         cancelled = true;
+        owner.getScheduler().removeTask(this);
     }
 
     @Override

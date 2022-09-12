@@ -54,7 +54,7 @@ public class ModularRunnable implements ModularTask {
 
     @Override
     public void cancel() {
-        throw new RuntimeException(new IllegalAccessException("ModularRunnable cannot be canceled!"));
+        owner.getScheduler().removeTask(this);
     }
 
     @Override
@@ -62,5 +62,6 @@ public class ModularRunnable implements ModularTask {
         running = true;
         runnable.run();
         running = false;
+        cancel();
     }
 }

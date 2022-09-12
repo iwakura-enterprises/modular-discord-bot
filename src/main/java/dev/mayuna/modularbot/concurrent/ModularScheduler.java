@@ -51,7 +51,9 @@ public class ModularScheduler {
     }
 
     public void cancelTasks() {
-        tasks.forEach((modularTask, thread) -> {
+        Map<ModularTask, Thread> tasksCopy = new HashMap<>(this.tasks);
+
+        tasksCopy.forEach((modularTask, thread) -> {
             try {
                 modularTask.cancel();
             } catch (Exception ignored) {
@@ -59,5 +61,9 @@ public class ModularScheduler {
         });
 
         tasks.clear();
+    }
+
+    public void removeTask(ModularTask modularTask) {
+        tasks.remove(modularTask);
     }
 }
