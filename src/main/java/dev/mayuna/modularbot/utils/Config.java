@@ -2,10 +2,12 @@ package dev.mayuna.modularbot.utils;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.zaxxer.hikari.HikariConfig;
 import dev.mayuna.modularbot.ModularBot;
 import dev.mayuna.modularbot.logging.Logger;
 import dev.mayuna.pumpk1n.api.StorageHandler;
 import dev.mayuna.pumpk1n.impl.FolderStorageHandler;
+import dev.mayuna.pumpk1n.impl.SQLStorageHandler;
 import dev.mayuna.pumpk1n.impl.SQLiteStorageHandler;
 import lombok.Getter;
 import lombok.Setter;
@@ -103,7 +105,23 @@ public class Config {
         public StorageHandler getStorageHandler() {
             switch (format) {
                 case SQL -> {
-                    throw new RuntimeException("Not implemented, yet!"); // TODO: Implement
+                    HikariConfig hikariConfig = new HikariConfig();
+                    String fullHostname = sql.getHostname();
+
+                    if (sql.getPort() != null && !sql.getPort().isEmpty()) {
+                        fullHostname += ":" + sql.getPort();
+                    }
+
+                    // TODO: SSL
+                    hikariConfig.setJdbcUrl("jdbc:mysql://" + fullHostname + "/" + sql.getDatabase());
+                    hikariConfig.setDriverClassName("com.mysql.cj.jdbc.Driver");
+                    hikariConfig.setUsername(sql.getUsername());
+                    hikariConfig.setPassword(sql.getPassword());
+                    hikariConfig.setMinimumIdle(sql.getSettings().getMinimumConnections());
+                    hikariConfig.setMaximumPoolSize(sql.getSettings().getMaximumConnections());
+                    hikariConfig.setConnectionTimeout(sql.getSettings().getTimeout());
+                    hikariConfig.setPoolName(sql.getSettings().getPoolName());
+                    return new SQLStorageHandler(hikariConfig, sql.getTables().getDataHolders());
                 }
                 case SQLITE -> {
                     return new SQLiteStorageHandler(SQLiteStorageHandler.Settings.Builder.create()
