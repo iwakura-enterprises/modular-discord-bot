@@ -73,13 +73,15 @@ public class ModularBot {
             shutdownGracefully();
         }
 
-        Logger.info("Loading data manager...");
-        dataManager = new DataManager(ModularBotConfig.getInstance().getData().getStorageHandler());
-        Logger.info("Preparing storage...");
-        dataManager.prepareStorage();
+        if (ModularBotConfig.getInstance().getData().isEnabled()) {
+            Logger.info("Loading data manager...");
+            dataManager = new DataManager(ModularBotConfig.getInstance().getData().getStorageHandler());
+            Logger.info("Preparing storage...");
+            dataManager.prepareStorage();
 
-        Logger.info("Loading global data holder...");
-        dataManager.getGlobalDataHolder();
+            Logger.info("Loading global data holder...");
+            dataManager.getGlobalDataHolder();
+        }
 
         try {
             ModuleManager.getInstance().enableModules();

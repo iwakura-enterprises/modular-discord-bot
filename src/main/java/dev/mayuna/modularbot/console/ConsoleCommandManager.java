@@ -28,6 +28,11 @@ public class ConsoleCommandManager {
                          new ModularConsoleCommand()
         );
 
+        if (System.console() == null) {
+            Logger.info("Console command thread will not be started - System.console() returned null");
+            return;
+        }
+
         startCommandThread();
     }
 

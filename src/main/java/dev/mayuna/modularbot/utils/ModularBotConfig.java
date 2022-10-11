@@ -7,6 +7,7 @@ import dev.mayuna.modularbot.ModularBot;
 import dev.mayuna.modularbot.logging.Logger;
 import dev.mayuna.modularbot.managers.ModuleManager;
 import dev.mayuna.pumpk1n.api.StorageHandler;
+import dev.mayuna.pumpk1n.impl.BufferedFolderStorageHandler;
 import dev.mayuna.pumpk1n.impl.FolderStorageHandler;
 import dev.mayuna.pumpk1n.impl.SQLStorageHandler;
 import dev.mayuna.pumpk1n.impl.SQLiteStorageHandler;
@@ -100,10 +101,15 @@ public class ModularBotConfig {
 
     public static class Data {
 
+        protected @Getter boolean enabled = true;
         protected @Getter String format;
         protected @Getter SQL sql = new SQL();
 
         public StorageHandler getStorageHandler() {
+            if (!enabled) {
+                return null;
+            }
+
             StaticFormat staticFormat = StaticFormat.safeValueOf(format);
 
             if (staticFormat != null) {
@@ -143,6 +149,7 @@ public class ModularBotConfig {
                     return (StorageHandler) clazz.getConstructor().newInstance();
                 } catch (Exception exception) {
                     Logger.get().error("Failed to load custom storage format! Check if the storage handler has public non-args constructor, if it's in classpath and if the specified class is type of StorageHandler.", exception);
+                    ModularBot.shutdownGracefully();
                 }
             }
 
