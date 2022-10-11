@@ -77,8 +77,6 @@ public class ModularBot {
         dataManager = new DataManager(ModularBotConfig.getInstance().getData().getStorageHandler());
         Logger.info("Preparing storage...");
         dataManager.prepareStorage();
-        Logger.info("Trickery for Pumpk1n to see loaded classes from modules...");
-        CustomJarClassLoader.processDataManager(dataManager);
 
         Logger.info("Loading global data holder...");
         dataManager.getGlobalDataHolder();

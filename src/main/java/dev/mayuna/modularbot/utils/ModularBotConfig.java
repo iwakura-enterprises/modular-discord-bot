@@ -5,6 +5,7 @@ import com.google.gson.GsonBuilder;
 import com.zaxxer.hikari.HikariConfig;
 import dev.mayuna.modularbot.ModularBot;
 import dev.mayuna.modularbot.logging.Logger;
+import dev.mayuna.modularbot.managers.ModuleManager;
 import dev.mayuna.pumpk1n.api.StorageHandler;
 import dev.mayuna.pumpk1n.impl.FolderStorageHandler;
 import dev.mayuna.pumpk1n.impl.SQLStorageHandler;
@@ -99,38 +100,49 @@ public class ModularBotConfig {
 
     public static class Data {
 
-        protected @Getter Format format = Format.JSON;
+        protected @Getter String format;
         protected @Getter SQL sql = new SQL();
 
         public StorageHandler getStorageHandler() {
-            switch (format) {
-                case SQL -> {
-                    HikariConfig hikariConfig = new HikariConfig();
-                    String fullHostname = sql.getHostname();
+            StaticFormat staticFormat = StaticFormat.safeValueOf(format);
 
-                    if (sql.getPort() != null && !sql.getPort().isEmpty()) {
-                        fullHostname += ":" + sql.getPort();
+            if (staticFormat != null) {
+                switch (staticFormat) {
+                    case SQL -> {
+                        HikariConfig hikariConfig = new HikariConfig();
+                        String fullHostname = sql.getHostname();
+
+                        if (sql.getPort() != null && !sql.getPort().isEmpty()) {
+                            fullHostname += ":" + sql.getPort();
+                        }
+
+                        // TODO: SSL
+                        hikariConfig.setJdbcUrl("jdbc:mysql://" + fullHostname + "/" + sql.getDatabase());
+                        hikariConfig.setDriverClassName("com.mysql.cj.jdbc.Driver");
+                        hikariConfig.setUsername(sql.getUsername());
+                        hikariConfig.setPassword(sql.getPassword());
+                        hikariConfig.setMinimumIdle(sql.getSettings().getMinimumConnections());
+                        hikariConfig.setMaximumPoolSize(sql.getSettings().getMaximumConnections());
+                        hikariConfig.setConnectionTimeout(sql.getSettings().getTimeout());
+                        hikariConfig.setPoolName(sql.getSettings().getPoolName());
+                        return new SQLStorageHandler(hikariConfig, sql.getTables().getDataHolders());
                     }
-
-                    // TODO: SSL
-                    hikariConfig.setJdbcUrl("jdbc:mysql://" + fullHostname + "/" + sql.getDatabase());
-                    hikariConfig.setDriverClassName("com.mysql.cj.jdbc.Driver");
-                    hikariConfig.setUsername(sql.getUsername());
-                    hikariConfig.setPassword(sql.getPassword());
-                    hikariConfig.setMinimumIdle(sql.getSettings().getMinimumConnections());
-                    hikariConfig.setMaximumPoolSize(sql.getSettings().getMaximumConnections());
-                    hikariConfig.setConnectionTimeout(sql.getSettings().getTimeout());
-                    hikariConfig.setPoolName(sql.getSettings().getPoolName());
-                    return new SQLStorageHandler(hikariConfig, sql.getTables().getDataHolders());
+                    case SQLITE -> {
+                        return new SQLiteStorageHandler(SQLiteStorageHandler.Settings.Builder.create()
+                                                                                             .setFileName(sql.getDatabase() + ".db")
+                                                                                             .setTableName(sql.getTables().getDataHolders())
+                                                                                             .build());
+                    }
+                    case JSON -> {
+                        return new FolderStorageHandler(ModularBot.Values.getPathFolderJsonData());
+                    }
                 }
-                case SQLITE -> {
-                    return new SQLiteStorageHandler(SQLiteStorageHandler.Settings.Builder.create()
-                                                            .setFileName(sql.getDatabase() + ".db")
-                                                            .setTableName(sql.getTables().getDataHolders())
-                                                            .build());
-                }
-                case JSON -> {
-                    return new FolderStorageHandler(ModularBot.Values.getPathFolderJsonData());
+            } else {
+                try {
+                    Class<?> clazz = ModuleManager.getInstance().getJarClassLoader().loadClass(format, true);
+                    return (StorageHandler) clazz.getConstructor().newInstance();
+                } catch (Exception exception) {
+                    Logger.get().error("Failed to load custom storage format! Check if the storage handler has public non-args constructor, if it's in classpath and if the specified class is type of StorageHandler.", exception);
                 }
             }
 
@@ -162,10 +174,18 @@ public class ModularBotConfig {
             }
         }
 
-        public enum Format {
+        public enum StaticFormat {
             SQL,
             SQLITE,
             JSON;
+
+            public static StaticFormat safeValueOf(String name) {
+                try {
+                    return StaticFormat.valueOf(name);
+                } catch (Exception ignored) {
+                    return null;
+                }
+            }
         }
     }
 }
