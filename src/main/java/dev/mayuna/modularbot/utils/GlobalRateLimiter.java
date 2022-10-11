@@ -6,7 +6,6 @@ import javassist.util.proxy.ProxyFactory;
 import lombok.Getter;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.requests.Request;
-import net.dv8tion.jda.api.sharding.ShardManager;
 import net.dv8tion.jda.internal.JDAImpl;
 import net.dv8tion.jda.internal.requests.Requester;
 
@@ -30,7 +29,7 @@ public class GlobalRateLimiter {
                     mutex.notifyAll();
                 }
             }
-        }, 0, Config.getInstance().getBot().getGlobalRateLimiter().getResetRequestsCountAfter());
+        }, 0, ModularBotConfig.getInstance().getBot().getGlobalRateLimiter().getResetRequestsCountAfter());
     }
 
     public void processJda(JDA jda) {
@@ -40,7 +39,7 @@ public class GlobalRateLimiter {
     }
 
     public boolean isGloballyRateLimited() {
-        return requests >= Config.getInstance().getBot().getGlobalRateLimiter().getMaxRequestCount();
+        return requests >= ModularBotConfig.getInstance().getBot().getGlobalRateLimiter().getMaxRequestCount();
     }
 
     /**
@@ -63,7 +62,7 @@ public class GlobalRateLimiter {
                 if (args.length >= 1) { // There cannot be more arguments since the Requester#request() method has only one argument
                     if (args[0] instanceof Request<?> request) {
                         endpoint = request.getRoute().getBaseRoute().toString();
-                        String[] ignoredEndpoints = Config.getInstance().getBot().getGlobalRateLimiter().getIgnoredEndpoints();
+                        String[] ignoredEndpoints = ModularBotConfig.getInstance().getBot().getGlobalRateLimiter().getIgnoredEndpoints();
 
                         for (String ignoredEndpoint : ignoredEndpoints) {
                             // TODO: Tyto replacementy předělat do Configu #postLoadProcess(), ať se to neustále nedělá při každém requestu

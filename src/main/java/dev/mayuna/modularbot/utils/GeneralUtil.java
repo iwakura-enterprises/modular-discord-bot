@@ -25,7 +25,7 @@ public class GeneralUtil {
     }
 
     public static String getSQLDataHolderDatabaseFromConfig() {
-        return Config.getInstance().getData().getSql().getTables().getDataHolders();
+        return ModularBotConfig.getInstance().getData().getSql().getTables().getDataHolders();
     }
 
     public static String replaceAllSQLPlaceholders(String sql) {

@@ -6,7 +6,7 @@ import dev.mayuna.modularbot.events.AllShardsStartedEvent;
 import dev.mayuna.modularbot.events.ShardRebootedEvent;
 import dev.mayuna.modularbot.events.ShardStartedEvent;
 import dev.mayuna.modularbot.logging.Logger;
-import dev.mayuna.modularbot.utils.Config;
+import dev.mayuna.modularbot.utils.ModularBotConfig;
 import dev.mayuna.modularbot.utils.GeneralUtil;
 import dev.mayuna.modularbot.utils.GlobalRateLimiter;
 import lombok.Getter;
@@ -32,7 +32,7 @@ public class WrappedShardManager {
         this.instance = instance;
         ModularBot.getGlobalEventBus().register(new ShardListener());
 
-        if (Config.getInstance().getBot().getGlobalRateLimiter().isEnabled()) {
+        if (ModularBotConfig.getInstance().getBot().getGlobalRateLimiter().isEnabled()) {
             Logger.info("Enabling custom Global Rate Limiter...");
             globalRateLimiter = new GlobalRateLimiter();
         } else {
@@ -44,7 +44,7 @@ public class WrappedShardManager {
      * Initializes timer which restarts disconnected shards if the config value of "restartShardEveryIfNecessary" is larger than zero
      */
     private void initShardRestartSchedule() {
-        long restartShardEveryIfNecessary = Config.getInstance().getBot().getRestartShardEveryIfNecessary();
+        long restartShardEveryIfNecessary = ModularBotConfig.getInstance().getBot().getRestartShardEveryIfNecessary();
 
         if (restartShardEveryIfNecessary <= 0) {
             return;
@@ -70,7 +70,7 @@ public class WrappedShardManager {
         long startTime = System.currentTimeMillis();
 
         do {
-            if (Config.getInstance().getBot().isShowEtaWhenWaitingOnShards()) {
+            if (ModularBotConfig.getInstance().getBot().isShowEtaWhenWaitingOnShards()) {
                 long currentTime = System.currentTimeMillis();
 
                 if (counter == 10) {
@@ -228,7 +228,7 @@ public class WrappedShardManager {
 
                 ModularBot.getGlobalEventBus().post(new ShardStartedEvent(shard));
 
-                if (didAllShardsStart(Config.getInstance().getBot().getTotalShards())) {
+                if (didAllShardsStart(ModularBotConfig.getInstance().getBot().getTotalShards())) {
                     shouldCheckForNewShards = false;
                     startedShards = null;
                     ModularBot.getGlobalEventBus().post(new AllShardsStartedEvent());

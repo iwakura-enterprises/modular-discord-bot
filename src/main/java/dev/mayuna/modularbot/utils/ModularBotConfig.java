@@ -16,9 +16,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 
-public class Config {
+public class ModularBotConfig {
 
-    private static @Getter @Setter Config instance = new Config();
+    private static @Getter @Setter ModularBotConfig instance = new ModularBotConfig();
 
     private @Getter Bot bot = new Bot();
     private @Getter Data data = new Data();
@@ -32,7 +32,7 @@ public class Config {
                 }
             }
 
-            instance = getGson().fromJson(String.join("", Files.readAllLines(getPath())), Config.class);
+            instance = getGson().fromJson(String.join("", Files.readAllLines(getPath())), ModularBotConfig.class);
             save();
             return true;
         } catch (Exception exception) {

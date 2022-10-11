@@ -12,7 +12,7 @@ import dev.mayuna.modularbot.logging.Logger;
 import dev.mayuna.modularbot.managers.DataManager;
 import dev.mayuna.modularbot.managers.ModuleManager;
 import dev.mayuna.modularbot.managers.WrappedShardManager;
-import dev.mayuna.modularbot.utils.Config;
+import dev.mayuna.modularbot.utils.ModularBotConfig;
 import dev.mayuna.modularbot.utils.CustomJarClassLoader;
 import lombok.Getter;
 import lombok.Setter;
@@ -53,7 +53,7 @@ public class ModularBot {
         long start = System.currentTimeMillis();
 
         Logger.debug("Loading config...");
-        if (!Config.load()) {
+        if (!ModularBotConfig.load()) {
             shutdownGracefully();
         }
 
@@ -74,7 +74,7 @@ public class ModularBot {
         }
 
         Logger.info("Loading data manager...");
-        dataManager = new DataManager(Config.getInstance().getData().getStorageHandler());
+        dataManager = new DataManager(ModularBotConfig.getInstance().getData().getStorageHandler());
         Logger.info("Preparing storage...");
         dataManager.prepareStorage();
         Logger.info("Trickery for Pumpk1n to see loaded classes from modules...");
@@ -107,7 +107,7 @@ public class ModularBot {
         Logger.info("Initializing JDA Utilities...");
 
         commandClientBuilder = new CommandClientBuilder()
-                .setOwnerId(Config.getInstance().getBot().getOwnerId());
+                .setOwnerId(ModularBotConfig.getInstance().getBot().getOwnerId());
 
         ModuleManager.getInstance().processCommandClientBuilder(commandClientBuilder);
     }
@@ -116,10 +116,10 @@ public class ModularBot {
      * Initializes JDA Shard Manager
      */
     private static void initJDA() {
-        Logger.info("Initializing JDA Shard Manager with " + Config.getInstance().getBot().getTotalShards() + " shards...");
+        Logger.info("Initializing JDA Shard Manager with " + ModularBotConfig.getInstance().getBot().getTotalShards() + " shards...");
 
-        var shardManagerBuilder = DefaultShardManagerBuilder.createLight(Config.getInstance().getBot().getToken())
-                                                            .setShardsTotal(Config.getInstance().getBot().getTotalShards())
+        var shardManagerBuilder = DefaultShardManagerBuilder.createLight(ModularBotConfig.getInstance().getBot().getToken())
+                                                            .setShardsTotal(ModularBotConfig.getInstance().getBot().getTotalShards())
                                                             .addEventListeners(commandClientBuilder.build())
                                                             .addEventListeners(new InteractiveListener())
                                                             .addEventListeners(new GlobalListener());
@@ -133,7 +133,7 @@ public class ModularBot {
             shutdownGracefully();
         }
 
-        if (Config.getInstance().getBot().isWaitOnAllShards()) {
+        if (ModularBotConfig.getInstance().getBot().isWaitOnAllShards()) {
             wrappedShardManager.waitOnAllShards();
         }
     }
