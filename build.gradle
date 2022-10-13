@@ -32,7 +32,7 @@ dependencies {
     implementation 'dev.mayuna:mayus-jda-utilities:3.1.2'
     implementation 'dev.mayuna:mayus-library:2.0.1'
     implementation 'dev.mayuna:mayus-json-utilities:1.3.1'
-    implementation 'dev.mayuna:pumpk1n:2.0'
+    implementation 'dev.mayuna:pumpk1n:2.0-hotfix1'
 
     // SLF4J
     implementation 'org.apache.logging.log4j:log4j-slf4j-impl:2.17.2'
@@ -83,7 +83,7 @@ task publishCloseAndRelease() {
 }
 
 shadowJar {
-    archiveName = 'moduler-discord-bot.jar'
+    archiveName = 'modular-discord-bot.jar'
 
     manifest {
         attributes 'Main-Class': 'dev.mayuna.modularbot.ModularBot'
