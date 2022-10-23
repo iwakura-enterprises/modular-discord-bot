@@ -17,6 +17,7 @@ import lombok.Getter;
 import lombok.NonNull;
 import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder;
 import org.xeustechnologies.jcl.JclObjectFactory;
+import org.xeustechnologies.jcl.exception.JclException;
 
 import java.io.*;
 import java.util.*;
@@ -152,7 +153,10 @@ public class ModuleManager {
                     module.setLogger(MayuLogger.create(module.getModuleInfo().name()));
 
                     loadModule(module);
-                } catch (Exception exception) {
+                } catch (JclException exception) {
+                    Logger.get().error("JCL Exception occurred while creating main class " + moduleInfo.mainClass() + " in module " + file.getName() + "!", exception);
+                }
+                catch (Exception exception) {
                     throw new RuntimeException("Exception occurred while loading Main Class for file/module " + file.getName() + "!", exception);
                 }
             } catch (Exception exception) {
