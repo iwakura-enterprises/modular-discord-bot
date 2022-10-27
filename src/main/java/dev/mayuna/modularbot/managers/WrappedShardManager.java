@@ -6,12 +6,15 @@ import dev.mayuna.modularbot.events.AllShardsStartedEvent;
 import dev.mayuna.modularbot.events.ShardRebootedEvent;
 import dev.mayuna.modularbot.events.ShardStartedEvent;
 import dev.mayuna.modularbot.logging.Logger;
-import dev.mayuna.modularbot.utils.ModularBotConfig;
+import dev.mayuna.modularbot.objects.ModuleStatus;
+import dev.mayuna.modularbot.objects.activity.ModularActivity;
 import dev.mayuna.modularbot.utils.GeneralUtil;
 import dev.mayuna.modularbot.utils.GlobalRateLimiter;
+import dev.mayuna.modularbot.utils.ModularBotConfig;
 import lombok.Getter;
 import lombok.NonNull;
 import net.dv8tion.jda.api.JDA;
+import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.events.GatewayPingEvent;
 import net.dv8tion.jda.api.sharding.ShardManager;
 
@@ -27,6 +30,8 @@ public class WrappedShardManager {
     private final @Getter ShardManager instance;
     private final @Getter GlobalRateLimiter globalRateLimiter;
     private final @Getter Timer shardRestartTimer = new Timer("SHARD-REBOOTER");
+    private final @Getter Timer presenceActivityUpdaterTimer = new Timer("PRESENCE-UPDATER");
+    private int lastActivityIndex = 0;
 
     public WrappedShardManager(ShardManager instance) {
         this.instance = instance;
@@ -37,6 +42,11 @@ public class WrappedShardManager {
             globalRateLimiter = new GlobalRateLimiter();
         } else {
             globalRateLimiter = null;
+        }
+
+        if (ModularBotConfig.getInstance().getBot().getPresenceActivity().isEnabled()) {
+            Logger.info("Enabling Modular Presence Activity...");
+            initPresenceActivityUpdater();
         }
     }
 
@@ -58,6 +68,64 @@ public class WrappedShardManager {
                 Logger.debug("Checking for offline shards done.");
             }
         }, restartShardEveryIfNecessary, restartShardEveryIfNecessary);
+    }
+
+    /**
+     * > This function initializes the presence activity updater
+     */
+    private void initPresenceActivityUpdater() {
+        long interval = ModularBotConfig.getInstance().getBot().getPresenceActivity().getCycleInterval();
+
+        if (interval < 1000) {
+            Logger.error("Presence Activity cycle interval must be higher than or equal to 1000ms!");
+            return;
+        }
+
+        presenceActivityUpdaterTimer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                WrappedShardManager shardManager = ModularBot.getWrappedShardManager();
+
+                if (shardManager == null) {
+                    return;
+                }
+
+                List<ModularActivity> allActivities = new LinkedList<>();
+
+                ModularBot.getModuleManager().getModules().forEach(module -> {
+                    if (module.getModuleStatus() == ModuleStatus.ENABLED) {
+                        List<ModularActivity> activities = module.getModuleActivities().getActivities();
+
+                        synchronized (activities) {
+                            allActivities.addAll(activities);
+                        }
+                    }
+                });
+
+                if (allActivities.size() <= lastActivityIndex + 1) {
+                    lastActivityIndex = 0;
+                } else {
+                    lastActivityIndex++;
+                }
+
+                ModularActivity modularActivity = allActivities.get(lastActivityIndex);
+
+                shardManager.executeForEachShardWithStatus(JDA.Status.CONNECTED, jda -> {
+                    try {
+                        Activity activity = modularActivity.getOnActivityRefresh().apply(jda.getShardInfo());
+                        jda.getPresence().setActivity(activity);
+                    } catch (Exception exception) {
+                        Logger.get()
+                              .error("While refreshing activities, modular activity " + modularActivity.getName() +
+                                             " from Module " + modularActivity.getModule()
+                                                                              .getModuleInfo()
+                                                                              .name() +
+                                             " has resulted in exception on shard ID " + jda.getShardInfo()
+                                                                                            .getShardId() + "!", exception);
+                    }
+                });
+            }
+        }, 0, interval);
     }
 
     /**

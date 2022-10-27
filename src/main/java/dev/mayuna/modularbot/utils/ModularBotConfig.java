@@ -7,7 +7,6 @@ import dev.mayuna.modularbot.ModularBot;
 import dev.mayuna.modularbot.logging.Logger;
 import dev.mayuna.modularbot.managers.ModuleManager;
 import dev.mayuna.pumpk1n.api.StorageHandler;
-import dev.mayuna.pumpk1n.impl.BufferedFolderStorageHandler;
 import dev.mayuna.pumpk1n.impl.FolderStorageHandler;
 import dev.mayuna.pumpk1n.impl.SQLStorageHandler;
 import dev.mayuna.pumpk1n.impl.SQLiteStorageHandler;
@@ -80,6 +79,7 @@ public class ModularBotConfig {
         protected @Getter long restartShardEveryIfNecessary = 60000;
 
         protected @Getter GlobalRateLimiter globalRateLimiter = new GlobalRateLimiter();
+        protected @Getter PresenceActivity presenceActivity = new PresenceActivity();
 
         public static class GlobalRateLimiter {
 
@@ -96,6 +96,12 @@ public class ModularBotConfig {
                 "PATCH/webhooks/{application_id}/{interaction_token}/messages/{message_id}",
                 "DELETE/webhooks/{application_id}/{interaction_token}/messages/{message_id}"
             };
+        }
+
+        public static class PresenceActivity {
+
+            protected @Getter boolean enabled = true;
+            protected @Getter long cycleInterval = 10000;
         }
     }
 

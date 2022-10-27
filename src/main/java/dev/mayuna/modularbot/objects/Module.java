@@ -3,12 +3,15 @@ package dev.mayuna.modularbot.objects;
 import com.jagrosh.jdautilities.command.CommandClientBuilder;
 import dev.mayuna.modularbot.concurrent.ModularScheduler;
 import dev.mayuna.modularbot.logging.MayuLogger;
+import dev.mayuna.modularbot.objects.activity.ModuleActivities;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
 import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder;
 
 public abstract class Module {
+
+    private final @Getter ModuleActivities moduleActivities = new ModuleActivities(this);
 
     private @Getter @Setter ModuleInfo moduleInfo;
     private @Getter @Setter ModuleStatus moduleStatus;

@@ -107,7 +107,8 @@ public class ModularBot {
         Logger.info("Initializing JDA Utilities...");
 
         commandClientBuilder = new CommandClientBuilder()
-                .setOwnerId(ModularBotConfig.getInstance().getBot().getOwnerId());
+                .setOwnerId(ModularBotConfig.getInstance().getBot().getOwnerId())
+                .setActivity(null);
 
         ModuleManager.getInstance().processCommandClientBuilder(commandClientBuilder);
     }
@@ -200,6 +201,7 @@ public class ModularBot {
 
         if (wrappedShardManager != null) {
             wrappedShardManager.getInstance().shutdown();
+            wrappedShardManager.getShardRestartTimer().cancel();
         }
     }
 
