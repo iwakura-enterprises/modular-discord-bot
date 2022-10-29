@@ -63,9 +63,9 @@ public class WrappedShardManager {
         shardRestartTimer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
-                Logger.debug("Checking for offline shards...");
+                Logger.flow("Checking for offline shards...");
                 restartShardsIfNotConnected();
-                Logger.debug("Checking for offline shards done.");
+                Logger.flow("Checking for offline shards done.");
             }
         }, restartShardEveryIfNecessary, restartShardEveryIfNecessary);
     }
