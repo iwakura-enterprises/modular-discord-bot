@@ -7,7 +7,6 @@ import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Activity;
 
 import java.util.*;
-import java.util.concurrent.Callable;
 import java.util.function.Function;
 
 public class ModuleActivities {
@@ -23,9 +22,9 @@ public class ModuleActivities {
      * Adds {@link Activity} to internal list that Modular Bot will use
      *
      * @param name              Non-null activity name
-     * @param onActivityRefresh Non-null {@link Function} with {@link JDA.ShardInfo} as an argument and {@link Activity} as a return value
+     * @param onActivityRefresh Non-null {@link Function} with {@link JDA} (shard) as an argument and {@link Activity} as a return value
      */
-    public void addActivity(@NonNull String name, @NonNull Function<JDA.ShardInfo, Activity> onActivityRefresh) {
+    public void addActivity(@NonNull String name, @NonNull Function<JDA, Activity> onActivityRefresh) {
         activities.add(new ModularActivity(module, name, onActivityRefresh));
     }
 

@@ -11,9 +11,9 @@ public class ModularActivity {
 
     private final @Getter Module module;
     private final @Getter String name;
-    private final @Getter Function<JDA.ShardInfo, Activity> onActivityRefresh;
+    private final @Getter Function<JDA, Activity> onActivityRefresh;
 
-    public ModularActivity(Module module, String name, Function<JDA.ShardInfo, Activity> onActivityRefresh) {
+    public ModularActivity(Module module, String name, Function<JDA, Activity> onActivityRefresh) {
         this.module = module;
         this.name = name;
         this.onActivityRefresh = onActivityRefresh;

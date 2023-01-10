@@ -112,7 +112,7 @@ public class WrappedShardManager {
 
                 shardManager.executeForEachShardWithStatus(JDA.Status.CONNECTED, jda -> {
                     try {
-                        Activity activity = modularActivity.getOnActivityRefresh().apply(jda.getShardInfo());
+                        Activity activity = modularActivity.getOnActivityRefresh().apply(jda);
                         jda.getPresence().setActivity(activity);
                     } catch (Exception exception) {
                         Logger.get()
