@@ -27,7 +27,7 @@ public class ModuleManagerImpl implements ModuleManager {
 
     private static ModuleManagerImpl instance;
 
-    private final @Getter List<Module> modules = Collections.synchronizedList(new LinkedList<>());
+    private @Getter List<Module> modules = Collections.synchronizedList(new LinkedList<>());
     private final @Getter JclObjectFactory jclObjectFactory = JclObjectFactory.getInstance();
     private @Getter CustomJarClassLoader jarClassLoader = new CustomJarClassLoader();
 
@@ -52,11 +52,7 @@ public class ModuleManagerImpl implements ModuleManager {
     ///////////////
 
     /**
-     * Determines if the module is loaded (is in {@link #modules} list
-     *
-     * @param moduleName Module name
-     *
-     * @return True if the specified module is loaded, false otherwise
+     * @inheritDoc
      */
     public boolean isModuleLoaded(String moduleName) {
         return getModuleByName(moduleName).orElse(null) != null;
@@ -67,11 +63,7 @@ public class ModuleManagerImpl implements ModuleManager {
     /////////////
 
     /**
-     * Gets {@link Module} by name
-     *
-     * @param moduleName Module name
-     *
-     * @return {@link Optional} with {@link Module}
+     * @inheritDoc
      */
     public Optional<Module> getModuleByName(String moduleName) {
         return modules.stream().filter(module -> module.getModuleInfo().name().equalsIgnoreCase(moduleName)).findFirst();
@@ -167,9 +159,7 @@ public class ModuleManagerImpl implements ModuleManager {
     }
 
     /**
-     * Loads a module by calling its onLoad() method.
-     *
-     * @param module The module to load.
+     * @inheritDoc
      */
     public synchronized void loadModule(Module module) {
         String moduleName = module.getModuleInfo().name();
@@ -197,6 +187,9 @@ public class ModuleManagerImpl implements ModuleManager {
         Logger.debug("Module " + moduleName + " loaded successfully.");
     }
 
+    /**
+     * @inheritDoc
+     */
     public void enableModules() {
         Logger.debug("Enabling " + modules.size() + " modules...");
 
@@ -228,6 +221,9 @@ public class ModuleManagerImpl implements ModuleManager {
         });
     }
 
+    /**
+     * @inheritDoc
+     */
     public synchronized void enableModule(Module module) {
         if (module.getModuleStatus() == ModuleStatus.ENABLED) {
             return;
@@ -271,16 +267,14 @@ public class ModuleManagerImpl implements ModuleManager {
     }
 
     /**
-     * Unloads module
-     *
-     * @param module Base module
+     * @inheritDoc
      */
     public synchronized void unloadModule(Module module) {
         String moduleName = module.getModuleInfo().name();
 
         switch (module.getModuleStatus()) {
             case NOT_LOADED -> {
-                Logger.warn("Tried unloading module which is not loaded!");
+                Logger.warn("Tried unloading module (" + moduleName + ") which is not loaded!");
             }
             case LOADED, ENABLING, DISABLED -> {
                 Logger.debug("Unloading module " + moduleName + "...");
@@ -315,7 +309,7 @@ public class ModuleManagerImpl implements ModuleManager {
     }
 
     /**
-     * Unloads all modules
+     * @inheritDoc
      */
     public void unloadModules() {
         if (modules.isEmpty()) {
@@ -325,7 +319,10 @@ public class ModuleManagerImpl implements ModuleManager {
         int size = modules.size();
         long start = System.currentTimeMillis();
 
-        modules.forEach(this::unloadModule);
+        List<Module> oldModules = modules;
+        modules = Collections.synchronizedList(new LinkedList<>());
+
+        oldModules.forEach(this::unloadModule);
         jarClassLoader = new CustomJarClassLoader();
 
         Logger.success("Unloaded " + size + " modules in " + (System.currentTimeMillis() - start) + "ms!");
