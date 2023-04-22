@@ -25,6 +25,7 @@ public class ModuleActivities {
      * @param onActivityRefresh Non-null {@link Function} with {@link JDA} (shard) as an argument and {@link Activity} as a return value
      */
     public void addActivity(@NonNull String name, @NonNull Function<JDA, Activity> onActivityRefresh) {
+        removeActivity(name);
         activities.add(new ModularActivity(module, name, onActivityRefresh));
     }
 
