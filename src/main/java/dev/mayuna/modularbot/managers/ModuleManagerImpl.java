@@ -52,7 +52,7 @@ public class ModuleManagerImpl implements ModuleManager {
     ///////////////
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public boolean isModuleLoaded(String moduleName) {
         return getModuleByName(moduleName).orElse(null) != null;
@@ -63,7 +63,7 @@ public class ModuleManagerImpl implements ModuleManager {
     /////////////
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public Optional<Module> getModuleByName(String moduleName) {
         return modules.stream().filter(module -> module.getModuleInfo().name().equalsIgnoreCase(moduleName)).findFirst();
@@ -74,7 +74,7 @@ public class ModuleManagerImpl implements ModuleManager {
     ///////////////////////////
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public List<Module> loadModules() {
         Logger.debug("Loading modules...");
@@ -159,7 +159,7 @@ public class ModuleManagerImpl implements ModuleManager {
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public synchronized void loadModule(Module module) {
         String moduleName = module.getModuleInfo().name();
@@ -188,7 +188,7 @@ public class ModuleManagerImpl implements ModuleManager {
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public void enableModules() {
         Logger.debug("Enabling " + modules.size() + " modules...");
@@ -222,7 +222,7 @@ public class ModuleManagerImpl implements ModuleManager {
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public synchronized void enableModule(Module module) {
         if (module.getModuleStatus() == ModuleStatus.ENABLED) {
@@ -267,7 +267,7 @@ public class ModuleManagerImpl implements ModuleManager {
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public synchronized void unloadModule(Module module) {
         String moduleName = module.getModuleInfo().name();
@@ -309,7 +309,7 @@ public class ModuleManagerImpl implements ModuleManager {
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public void unloadModules() {
         if (modules.isEmpty()) {
