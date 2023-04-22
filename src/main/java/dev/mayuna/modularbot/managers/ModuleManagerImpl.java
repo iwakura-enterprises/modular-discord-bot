@@ -2,8 +2,8 @@ package dev.mayuna.modularbot.managers;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.jagrosh.jdautilities.command.CommandClientBuilder;
 import dev.mayuna.modularbot.ModularBot;
+import dev.mayuna.modularbot.base.ModuleManager;
 import dev.mayuna.modularbot.concurrent.ModularScheduler;
 import dev.mayuna.modularbot.logging.Logger;
 import dev.mayuna.modularbot.logging.MayuLogger;
@@ -15,7 +15,6 @@ import dev.mayuna.modularbot.utils.CustomJarClassLoader;
 import dev.mayuna.modularbot.utils.ZipUtil;
 import lombok.Getter;
 import lombok.NonNull;
-import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder;
 import org.xeustechnologies.jcl.JclObjectFactory;
 import org.xeustechnologies.jcl.exception.JclException;
 
@@ -24,25 +23,25 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.zip.ZipFile;
 
-public class ModuleManager {
+public class ModuleManagerImpl implements ModuleManager {
 
-    private static ModuleManager instance;
+    private static ModuleManagerImpl instance;
 
     private final @Getter List<Module> modules = Collections.synchronizedList(new LinkedList<>());
     private final @Getter JclObjectFactory jclObjectFactory = JclObjectFactory.getInstance();
     private @Getter CustomJarClassLoader jarClassLoader = new CustomJarClassLoader();
 
-    private ModuleManager() {
+    private ModuleManagerImpl() {
     }
 
     /**
-     * Gets current instance of {@link ModuleManager}
+     * Gets current instance of {@link ModuleManagerImpl}
      *
-     * @return Non-null {@link ModuleManager}
+     * @return Non-null {@link ModuleManagerImpl}
      */
-    public static @NonNull ModuleManager getInstance() {
+    public static @NonNull ModuleManagerImpl getInstance() {
         if (instance == null) {
-            instance = new ModuleManager();
+            instance = new ModuleManagerImpl();
         }
 
         return instance;
@@ -83,11 +82,9 @@ public class ModuleManager {
     ///////////////////////////
 
     /**
-     * Loads modules from modules folder
-     *
-     * @throws IOException This exception is thrown when some exception occurred during the loading
+     * @inheritDoc
      */
-    public void loadModules() throws IOException {
+    public List<Module> loadModules() {
         Logger.debug("Loading modules...");
 
         if (!modules.isEmpty()) {
@@ -99,14 +96,14 @@ public class ModuleManager {
 
         if (!modulesFolder.exists()) {
             if (!modulesFolder.mkdirs()) {
-                throw new IOException("Could not create all necessary folders for path " + modulesFolder.getPath() + "!");
+                throw new RuntimeException("Could not create all necessary folders for path " + modulesFolder.getPath() + "!");
             }
         }
 
         File[] files = modulesFolder.listFiles();
 
         if (files == null) {
-            throw new IOException("Could not list files in folder in path " + modulesFolder.getPath() + "!");
+            throw new RuntimeException("Could not list files in folder in path " + modulesFolder.getPath() + "!");
         }
 
         long start = System.currentTimeMillis();
@@ -165,6 +162,8 @@ public class ModuleManager {
         }
 
         Logger.success("Loaded " + modules.size() + " modules in " + (System.currentTimeMillis() - start) + "ms!");
+
+        return modules;
     }
 
     /**
@@ -330,34 +329,5 @@ public class ModuleManager {
         jarClassLoader = new CustomJarClassLoader();
 
         Logger.success("Unloaded " + size + " modules in " + (System.currentTimeMillis() - start) + "ms!");
-    }
-
-    ////////////////
-    // Processing //
-    ////////////////
-
-    public void processCommandClientBuilder(CommandClientBuilder commandClientBuilder) {
-        modules.forEach(module -> module.onCommandClientBuilderInitialization(commandClientBuilder));
-    }
-
-    public void processShardBuilder(DefaultShardManagerBuilder shardManagerBuilder) {
-        modules.forEach(module -> module.onShardManagerBuilderInitialization(shardManagerBuilder));
-    }
-
-    public void processException(Throwable throwable) {
-        modules.forEach(module -> {
-            try {
-                for (var stackTraceElement : throwable.getStackTrace()) {
-                    for (String packageName : module.getModuleInfo().exceptionHandlingPackages()) {
-                        if (stackTraceElement.getClassName().contains(packageName)) {
-                            module.onUncaughtException(throwable);
-                            return;
-                        }
-                    }
-                }
-            } catch (Exception exception) {
-                Logger.get().error("Exception occurred while processing modules with uncaught exception!", exception);
-            }
-        });
     }
 }

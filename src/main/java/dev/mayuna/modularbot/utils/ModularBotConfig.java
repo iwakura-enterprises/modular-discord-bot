@@ -5,7 +5,7 @@ import com.google.gson.GsonBuilder;
 import com.zaxxer.hikari.HikariConfig;
 import dev.mayuna.modularbot.ModularBot;
 import dev.mayuna.modularbot.logging.Logger;
-import dev.mayuna.modularbot.managers.ModuleManager;
+import dev.mayuna.modularbot.managers.ModuleManagerImpl;
 import dev.mayuna.pumpk1n.api.StorageHandler;
 import dev.mayuna.pumpk1n.impl.FolderStorageHandler;
 import dev.mayuna.pumpk1n.impl.SQLStorageHandler;
@@ -151,7 +151,7 @@ public class ModularBotConfig {
                 }
             } else {
                 try {
-                    Class<?> clazz = ModuleManager.getInstance().getJarClassLoader().loadClass(format, true);
+                    Class<?> clazz = ModuleManagerImpl.getInstance().getJarClassLoader().loadClass(format, true);
                     return (StorageHandler) clazz.getConstructor().newInstance();
                 } catch (Exception exception) {
                     Logger.get().error("Failed to load custom storage format! Check if the storage handler has public non-args constructor, if it's in classpath and if the specified class is type of StorageHandler.", exception);

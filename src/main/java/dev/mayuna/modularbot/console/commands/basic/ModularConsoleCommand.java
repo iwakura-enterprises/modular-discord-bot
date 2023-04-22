@@ -5,15 +5,13 @@ import dev.mayuna.modularbot.ModularBot;
 import dev.mayuna.modularbot.console.commands.generic.AbstractConsoleCommand;
 import dev.mayuna.modularbot.console.commands.generic.CommandResult;
 import dev.mayuna.modularbot.logging.Logger;
-import dev.mayuna.modularbot.managers.ModuleManager;
+import dev.mayuna.modularbot.managers.ModuleManagerImpl;
 import dev.mayuna.modularbot.managers.WrappedShardManager;
 import dev.mayuna.modularbot.objects.Module;
 import dev.mayuna.modularbot.objects.ModuleInfo;
-import dev.mayuna.modularbot.objects.ModuleStatus;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.sharding.ShardManager;
 
-import java.io.IOException;
 import java.util.List;
 
 public class ModularConsoleCommand extends AbstractConsoleCommand {
@@ -33,7 +31,7 @@ public class ModularConsoleCommand extends AbstractConsoleCommand {
 
         switch (argumentParser.getArgumentAtIndex(0).getValue()) {
             case "modules", "m" -> {
-                ModuleManager moduleManager = ModuleManager.getInstance();
+                ModuleManagerImpl moduleManager = ModuleManagerImpl.getInstance();
 
                 if (argumentParser.hasArgumentAtIndex(1)) {
                     switch (argumentParser.getArgumentAtIndex(1).getValue()) {

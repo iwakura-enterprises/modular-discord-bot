@@ -10,10 +10,9 @@ import dev.mayuna.modularbot.console.commands.generic.AbstractConsoleCommand;
 import dev.mayuna.modularbot.listeners.GlobalListener;
 import dev.mayuna.modularbot.logging.Logger;
 import dev.mayuna.modularbot.managers.DataManager;
-import dev.mayuna.modularbot.managers.ModuleManager;
+import dev.mayuna.modularbot.managers.ModuleManagerImpl;
 import dev.mayuna.modularbot.managers.WrappedShardManager;
 import dev.mayuna.modularbot.utils.ModularBotConfig;
-import dev.mayuna.modularbot.utils.CustomJarClassLoader;
 import lombok.Getter;
 import lombok.Setter;
 import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder;
@@ -67,7 +66,7 @@ public class ModularBot {
         registerExceptionReporter();
 
         try {
-            ModuleManager.getInstance().loadModules();
+            ModuleManagerImpl.getInstance().loadModules();
         } catch (Exception exception) {
             Logger.get().fatal("Exception occurred while loading modules! Cannot proceed.", exception);
             shutdownGracefully();
@@ -84,7 +83,7 @@ public class ModularBot {
         }
 
         try {
-            ModuleManager.getInstance().enableModules();
+            ModuleManagerImpl.getInstance().enableModules();
         } catch (Exception exception) {
             Logger.get().fatal("Exception occurred while enabling modules! Cannot proceed.", exception);
             shutdownGracefully();
@@ -110,7 +109,7 @@ public class ModularBot {
                 .setOwnerId(ModularBotConfig.getInstance().getBot().getOwnerId())
                 .setActivity(null);
 
-        ModuleManager.getInstance().processCommandClientBuilder(commandClientBuilder);
+        ModuleManagerImpl.getInstance().processCommandClientBuilder(commandClientBuilder);
     }
 
     /**
@@ -125,7 +124,7 @@ public class ModularBot {
                                                             .addEventListeners(new InteractiveListener())
                                                             .addEventListeners(new GlobalListener());
 
-        ModuleManager.getInstance().processShardBuilder(shardManagerBuilder);
+        ModuleManagerImpl.getInstance().processShardBuilder(shardManagerBuilder);
 
         try {
             wrappedShardManager = new WrappedShardManager(shardManagerBuilder.build());
@@ -164,7 +163,7 @@ public class ModularBot {
             Throwable throwable = exceptionReport.getThrowable();
 
             Logger.get().warn("Uncaught exception occurred! Sending to modules...", throwable);
-            ModuleManager.getInstance().processException(throwable);
+            ModuleManagerImpl.getInstance().processException(throwable);
         }));
     }
 
@@ -197,7 +196,7 @@ public class ModularBot {
     }
 
     private static void doAllShutdownProcedures() {
-        ModuleManager.getInstance().unloadModules();
+        ModuleManagerImpl.getInstance().unloadModules();
 
         if (wrappedShardManager != null) {
             wrappedShardManager.getInstance().shutdown();
@@ -218,8 +217,8 @@ public class ModularBot {
     // Getters //
     /////////////
 
-    public static ModuleManager getModuleManager() {
-        return ModuleManager.getInstance();
+    public static ModuleManagerImpl getModuleManager() {
+        return ModuleManagerImpl.getInstance();
     }
 
     ///////////////////
