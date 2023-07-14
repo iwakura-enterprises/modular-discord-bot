@@ -7,6 +7,7 @@ import dev.mayuna.mayuslibrary.exceptionreporting.ExceptionListener;
 import dev.mayuna.mayuslibrary.exceptionreporting.ExceptionReporter;
 import dev.mayuna.modularbot.console.ConsoleCommandManager;
 import dev.mayuna.modularbot.console.commands.generic.AbstractConsoleCommand;
+import dev.mayuna.modularbot.events.WrappedShardManagerInitializedEvent;
 import dev.mayuna.modularbot.logging.Logger;
 import dev.mayuna.modularbot.managers.DataManager;
 import dev.mayuna.modularbot.managers.ModuleManagerImpl;
@@ -129,7 +130,10 @@ public class ModularBot {
         } catch (Exception exception) {
             Logger.get().fatal("Exception occurred while build Shard Manager! Cannot proceed.", exception);
             shutdownGracefully();
+            return;
         }
+
+        getGlobalEventBus().post(new WrappedShardManagerInitializedEvent(wrappedShardManager));
 
         if (ModularBotConfig.getInstance().getBot().isWaitOnAllShards()) {
             wrappedShardManager.waitOnAllShards();
