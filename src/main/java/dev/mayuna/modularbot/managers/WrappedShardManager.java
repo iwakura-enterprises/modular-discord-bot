@@ -16,7 +16,9 @@ import lombok.NonNull;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.events.GatewayPingEvent;
+import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.sharding.ShardManager;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -36,6 +38,7 @@ public class WrappedShardManager {
     public WrappedShardManager(ShardManager instance) {
         this.instance = instance;
         ModularBot.getGlobalEventBus().register(new ShardListener());
+        instance.addEventListener(new ShardListener());
 
         if (ModularBotConfig.getInstance().getBot().getGlobalRateLimiter().isEnabled()) {
             Logger.info("Enabling custom Global Rate Limiter...");
@@ -273,13 +276,12 @@ public class WrappedShardManager {
         }
     }
 
-    protected class ShardListener {
+    protected class ShardListener extends ListenerAdapter {
 
         private List<Integer> startedShards = new LinkedList<>();
         private boolean shouldCheckForNewShards = true;
 
-        @Subscribe
-        public void onGatewayPing(GatewayPingEvent event) {
+        public void onGatewayPing(@NotNull GatewayPingEvent event) {
             if (!shouldCheckForNewShards) {
                 return;
             }

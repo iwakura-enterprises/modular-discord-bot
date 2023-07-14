@@ -6,8 +6,13 @@ import javassist.util.proxy.ProxyFactory;
 import lombok.Getter;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.requests.Request;
+import net.dv8tion.jda.api.requests.RestConfig;
+import net.dv8tion.jda.api.requests.RestRateLimiter;
 import net.dv8tion.jda.internal.JDAImpl;
 import net.dv8tion.jda.internal.requests.Requester;
+import net.dv8tion.jda.internal.utils.config.AuthorizationConfig;
+import net.dv8tion.jda.internal.utils.config.SessionConfig;
+import net.dv8tion.jda.internal.utils.config.ThreadingConfig;
 
 import java.lang.reflect.Field;
 import java.util.Timer;
@@ -16,10 +21,9 @@ import java.util.TimerTask;
 public class GlobalRateLimiter {
 
     private final @Getter Timer resetTimer = new Timer();
+    private final Object mutex = new Object();
     private @Getter int requests;
     private @Getter int totalRequests;
-
-    private final Object mutex = new Object();
 
     public GlobalRateLimiter() {
         resetTimer.scheduleAtFixedRate(new TimerTask() {
@@ -44,16 +48,16 @@ public class GlobalRateLimiter {
     }
 
     /**
-     * It creates a proxy of the Requester class, which is used by JDA to send requests to Discord. The proxy is used to intercept the #execute() method,
-     * which is called every time a request is sent to Discord. The proxy then checks if the request is globally rate limited and if it is, it waits
-     * until it's not
+     * It creates a proxy of the Requester class, which is used by JDA to send requests to Discord. The proxy is used to intercept the #execute()
+     * method, which is called every time a request is sent to Discord. The proxy then checks if the request is globally rate limited and if it is, it
+     * waits until it's not
      *
      * @param jdaImpl The JDAImpl instance of the shard.
      */
     protected void hijackIntoRequester(JDAImpl jdaImpl) {
         ProxyFactory proxyFactory = new ProxyFactory();
         proxyFactory.setSuperclass(Requester.class);
-        proxyFactory.setFilter(method -> method.getName().equals("execute"));
+        proxyFactory.setFilter(method -> method.getName().equals("request"));
 
         MethodHandler methodHandler = (self, thisMethod, proceed, args) -> {
             try {
@@ -99,7 +103,30 @@ public class GlobalRateLimiter {
         };
 
         try {
-            Requester proxiedRequester = (Requester) proxyFactory.create(new Class<?>[]{JDA.class}, new Object[]{jdaImpl}, methodHandler);
+            RestConfig restConfig = (RestConfig) getObjectFromField(jdaImpl, "restConfig");
+            ThreadingConfig threadConfig = (ThreadingConfig) getObjectFromField(jdaImpl, "threadConfig");
+            SessionConfig sessionConfig = (SessionConfig) getObjectFromField(jdaImpl, "sessionConfig");
+
+            boolean isRelative = sessionConfig.isRelativeRateLimit() && restConfig.isRelativeRateLimit();
+
+            // FROM JDA SOURCE CODE (https://github.com/discord-jda/JDA)
+            // JDA IS UNDER Apache-2.0 license
+            RestRateLimiter recreatedRateLimiter = restConfig.getRateLimiterFactory().apply(new RestRateLimiter.RateLimitConfig(
+                    threadConfig.getRateLimitPool(),
+                    jdaImpl.getSessionController().getRateLimitHandle(),
+                    isRelative
+            ));
+
+            Requester proxiedRequester = (Requester) proxyFactory.create(new Class<?>[]{JDA.class,
+                                                                                        AuthorizationConfig.class,
+                                                                                        RestConfig.class,
+                                                                                        RestRateLimiter.class
+            }, new Object[]{
+                    jdaImpl,
+                    jdaImpl.getAuthorizationConfig(),
+                    restConfig,
+                    recreatedRateLimiter
+            }, methodHandler);
 
             Field field = JDAImpl.class.getDeclaredField("requester");
             field.setAccessible(true);
@@ -110,5 +137,11 @@ public class GlobalRateLimiter {
             Logger.get().error("Failed to hijack Shard ID " + jdaImpl.getShardInfo()
                                                                      .getShardId() + " with proxied Requester! GlobalRateLimiter won't work.", exception);
         }
+    }
+
+    private Object getObjectFromField(Object object, String fieldName) throws NoSuchFieldException, IllegalAccessException {
+        Field field = object.getClass().getDeclaredField(fieldName);
+        field.setAccessible(true);
+        return field.get(object);
     }
 }
