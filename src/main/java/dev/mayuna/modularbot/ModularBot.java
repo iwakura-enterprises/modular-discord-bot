@@ -7,7 +7,6 @@ import dev.mayuna.mayuslibrary.exceptionreporting.ExceptionListener;
 import dev.mayuna.mayuslibrary.exceptionreporting.ExceptionReporter;
 import dev.mayuna.modularbot.console.ConsoleCommandManager;
 import dev.mayuna.modularbot.console.commands.generic.AbstractConsoleCommand;
-import dev.mayuna.modularbot.listeners.GlobalListener;
 import dev.mayuna.modularbot.logging.Logger;
 import dev.mayuna.modularbot.managers.DataManager;
 import dev.mayuna.modularbot.managers.ModuleManagerImpl;
@@ -121,8 +120,7 @@ public class ModularBot {
         var shardManagerBuilder = DefaultShardManagerBuilder.createLight(ModularBotConfig.getInstance().getBot().getToken())
                                                             .setShardsTotal(ModularBotConfig.getInstance().getBot().getTotalShards())
                                                             .addEventListeners(commandClientBuilder.build())
-                                                            .addEventListeners(new InteractiveListener())
-                                                            .addEventListeners(new GlobalListener());
+                                                            .addEventListeners(new InteractiveListener());
 
         ModuleManagerImpl.getInstance().processShardBuilder(shardManagerBuilder);
 
