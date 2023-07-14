@@ -44,7 +44,7 @@ public class GlobalRateLimiter {
     }
 
     /**
-     * It creates a proxy of the Requester class, which is used by JDA to send requests to Discord. The proxy is used to intercept the #request() method,
+     * It creates a proxy of the Requester class, which is used by JDA to send requests to Discord. The proxy is used to intercept the #execute() method,
      * which is called every time a request is sent to Discord. The proxy then checks if the request is globally rate limited and if it is, it waits
      * until it's not
      *
@@ -53,7 +53,7 @@ public class GlobalRateLimiter {
     protected void hijackIntoRequester(JDAImpl jdaImpl) {
         ProxyFactory proxyFactory = new ProxyFactory();
         proxyFactory.setSuperclass(Requester.class);
-        proxyFactory.setFilter(method -> method.getName().equals("request"));
+        proxyFactory.setFilter(method -> method.getName().equals("execute"));
 
         MethodHandler methodHandler = (self, thisMethod, proceed, args) -> {
             try {
