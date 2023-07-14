@@ -17,6 +17,7 @@ public class GlobalRateLimiter {
 
     private final @Getter Timer resetTimer = new Timer();
     private @Getter int requests;
+    private @Getter int totalRequests;
 
     private final Object mutex = new Object();
 
@@ -88,6 +89,7 @@ public class GlobalRateLimiter {
 
                     Logger.flow("[GLOBAL RATE LIMITER] Requesting endpoint " + endpoint);
                     requests++;
+                    totalRequests++;
                 }
             } catch (Exception exception) {
                 Logger.get().error("Exception occurred while handling proxied Requester method call #request()!", exception);
@@ -106,7 +108,7 @@ public class GlobalRateLimiter {
             Logger.info("Hijacked Shard ID " + jdaImpl.getShardInfo().getShardId() + " with proxied Requester.");
         } catch (Exception exception) {
             Logger.get().error("Failed to hijack Shard ID " + jdaImpl.getShardInfo()
-                                                                     .getShardId() + " with proxied Requester! GlobalRateLimiter won't work.");
+                                                                     .getShardId() + " with proxied Requester! GlobalRateLimiter won't work.", exception);
         }
     }
 }
