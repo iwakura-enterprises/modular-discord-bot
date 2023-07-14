@@ -225,7 +225,7 @@ public class ModularBot {
 
     public static class Values {
 
-        public static final String APP_VERSION = "b1.5.2";
+        public static final String APP_VERSION = "b1.5.9";
         private static @Getter @Setter String pathFolderModules = "./modules/";
         private static @Getter @Setter String pathFolderModuleConfigs = "./modules/%s/";
         private static @Getter @Setter String pathFolderJsonData = "./json_data/";
