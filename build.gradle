@@ -9,7 +9,7 @@ plugins {
 }
 
 group 'dev.mayuna'
-version 'b1.5.10'
+version 'b1.5.11'
 mainClassName = "dev.mayuna.modularbot.ModularBot"
 
 repositories {
