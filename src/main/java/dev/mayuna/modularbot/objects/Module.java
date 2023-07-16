@@ -1,6 +1,7 @@
 package dev.mayuna.modularbot.objects;
 
 import com.jagrosh.jdautilities.command.CommandClientBuilder;
+import dev.mayuna.mayusjdautils.MayusJDAUtilities;
 import dev.mayuna.modularbot.concurrent.ModularScheduler;
 import dev.mayuna.modularbot.logging.MayuLogger;
 import dev.mayuna.modularbot.objects.activity.ModuleActivities;
@@ -17,6 +18,7 @@ public abstract class Module {
     private @Getter @Setter ModuleStatus moduleStatus;
     private @Getter @Setter ModuleConfig moduleConfig;
     private @Getter @Setter MayuLogger logger;
+    private @Getter @Setter MayusJDAUtilities mayusJDAUtilities;
 
     private @Getter @Setter ModularScheduler scheduler;
 

@@ -2,6 +2,7 @@ package dev.mayuna.modularbot;
 
 import com.google.common.eventbus.EventBus;
 import com.jagrosh.jdautilities.command.CommandClientBuilder;
+import dev.mayuna.mayusjdautils.MayusJDAUtilities;
 import dev.mayuna.mayusjdautils.interactive.InteractiveListener;
 import dev.mayuna.mayuslibrary.exceptionreporting.ExceptionListener;
 import dev.mayuna.mayuslibrary.exceptionreporting.ExceptionReporter;
@@ -25,6 +26,7 @@ public class ModularBot {
     private static @Getter @Setter boolean dontSaveData = false;
     private static @Getter WrappedShardManager wrappedShardManager;
     private static @Getter CommandClientBuilder commandClientBuilder;
+    private static @Getter MayusJDAUtilities mayusJDAUtilities = new MayusJDAUtilities();
 
     /**
      * Main function of ModularBot
@@ -54,6 +56,7 @@ public class ModularBot {
         Logger.debug("Loading config...");
         if (!ModularBotConfig.load()) {
             shutdownGracefully();
+            return;
         }
 
         Logger.info("Initializing console commands...");
@@ -64,6 +67,9 @@ public class ModularBot {
 
         Logger.debug("Registering Exception reporter...");
         registerExceptionReporter();
+
+        Logger.debug("Loading Mayu's JDA Utilities...");
+        loadMayusJdaUtilities();
 
         try {
             ModuleManagerImpl.getInstance().loadModules();
@@ -98,6 +104,13 @@ public class ModularBot {
     /////////////////////
     // Private methods //
     /////////////////////
+
+    private static void loadMayusJdaUtilities() {
+        mayusJDAUtilities = new MayusJDAUtilities();
+
+        mayusJDAUtilities.getMessageInfoStyles().setDefaultEmbedStyle(mayusJDAUtilities.getMessageInfoStyles().getDefaultEmbedStyle()
+                                                                              .setFooter("Powered by Modular Discord Bot"));
+    }
 
     /**
      * Initializes JDA Chewtils

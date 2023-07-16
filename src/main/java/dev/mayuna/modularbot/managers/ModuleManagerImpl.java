@@ -2,6 +2,7 @@ package dev.mayuna.modularbot.managers;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import dev.mayuna.mayusjdautils.MayusJDAUtilities;
 import dev.mayuna.modularbot.ModularBot;
 import dev.mayuna.modularbot.base.ModuleManager;
 import dev.mayuna.modularbot.concurrent.ModularScheduler;
@@ -140,6 +141,10 @@ public class ModuleManagerImpl implements ModuleManager {
                     module.setModuleConfig(new ModuleConfig(module, defaultConfig));
                     module.setScheduler(new ModularScheduler(module));
                     module.setLogger(MayuLogger.create(module.getModuleInfo().name()));
+
+                    var mayusJdaUtilities = new MayusJDAUtilities();
+                    mayusJdaUtilities.copyFrom(ModularBot.getMayusJDAUtilities());
+                    module.setMayusJDAUtilities(mayusJdaUtilities);
 
                     loadModule(module);
                 } catch (JclException exception) {
