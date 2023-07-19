@@ -1,9 +1,9 @@
 package dev.mayuna.modularbot.utils;
 
 import dev.mayuna.modularbot.ModularBot;
-import dev.mayuna.modularbot.managers.DataManager;
-import dev.mayuna.pumpk1n.api.ClassGetter;
 import org.xeustechnologies.jcl.JarClassLoader;
+
+import java.io.InputStream;
 
 public class CustomJarClassLoader extends JarClassLoader {
 
@@ -15,5 +15,16 @@ public class CustomJarClassLoader extends JarClassLoader {
         }
 
         return super.loadClass(className, resolveIt);
+    }
+
+    @Override
+    public InputStream getResourceAsStream(String name) {
+        InputStream inputStream = ModularBot.class.getResourceAsStream(name);
+
+        if (inputStream != null) {
+            return inputStream;
+        }
+
+        return super.getResourceAsStream(name);
     }
 }
