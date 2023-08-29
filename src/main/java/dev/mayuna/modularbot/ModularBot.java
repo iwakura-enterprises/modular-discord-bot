@@ -108,8 +108,7 @@ public class ModularBot {
     private static void loadMayusJdaUtilities() {
         mayusJDAUtilities = new MayusJDAUtilities();
 
-        mayusJDAUtilities.getMessageInfoStyles().setDefaultEmbedStyle(mayusJDAUtilities.getMessageInfoStyles().getDefaultEmbedStyle()
-                                                                              .setFooter("Powered by Modular Discord Bot"));
+        mayusJDAUtilities.setMessageInfoStyles(new ModularBotStyles(mayusJDAUtilities));
     }
 
     /**
