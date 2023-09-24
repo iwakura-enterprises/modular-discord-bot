@@ -15,6 +15,7 @@ import dev.mayuna.modularbot.objects.ModuleStatus;
 import dev.mayuna.modularbot.utils.CustomJarClassLoader;
 import dev.mayuna.modularbot.utils.ZipUtil;
 import lombok.Getter;
+import lombok.NonNull;
 import org.xeustechnologies.jcl.JclObjectFactory;
 import org.xeustechnologies.jcl.exception.JclException;
 
@@ -25,11 +26,26 @@ import java.util.zip.ZipFile;
 
 public class ModuleManagerImpl implements ModuleManager {
 
+    private static ModuleManagerImpl instance;
+
     private @Getter List<Module> modules = Collections.synchronizedList(new LinkedList<>());
     private final @Getter JclObjectFactory jclObjectFactory = JclObjectFactory.getInstance();
     private @Getter CustomJarClassLoader jarClassLoader = new CustomJarClassLoader();
 
-    public ModuleManagerImpl() {
+    private ModuleManagerImpl() {
+    }
+
+    /**
+     * Gets current instance of {@link ModuleManagerImpl}
+     *
+     * @return Non-null {@link ModuleManagerImpl}
+     */
+    public static @NonNull ModuleManagerImpl getInstance() {
+        if (instance == null) {
+            instance = new ModuleManagerImpl();
+        }
+
+        return instance;
     }
 
     ///////////////
