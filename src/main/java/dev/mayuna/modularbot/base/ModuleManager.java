@@ -3,6 +3,7 @@ package dev.mayuna.modularbot.base;
 import com.jagrosh.jdautilities.command.CommandClientBuilder;
 import dev.mayuna.modularbot.logging.Logger;
 import dev.mayuna.modularbot.objects.Module;
+import dev.mayuna.modularbot.utils.CustomJarClassLoader;
 import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder;
 
 import java.util.List;
@@ -72,6 +73,8 @@ public interface ModuleManager {
      * @param module Module object
      */
     void unloadModule(Module module);
+
+    CustomJarClassLoader getJarClassLoader();
 
     default void processCommandClientBuilder(CommandClientBuilder commandClientBuilder) {
         getModules().forEach(module -> module.onCommandClientBuilderInitialization(commandClientBuilder));

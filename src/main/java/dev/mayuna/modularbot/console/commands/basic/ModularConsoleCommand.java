@@ -2,6 +2,7 @@ package dev.mayuna.modularbot.console.commands.basic;
 
 import dev.mayuna.mayuslibrary.arguments.ArgumentParser;
 import dev.mayuna.modularbot.ModularBot;
+import dev.mayuna.modularbot.base.ModuleManager;
 import dev.mayuna.modularbot.console.commands.generic.AbstractConsoleCommand;
 import dev.mayuna.modularbot.console.commands.generic.CommandResult;
 import dev.mayuna.modularbot.logging.Logger;
@@ -31,7 +32,7 @@ public class ModularConsoleCommand extends AbstractConsoleCommand {
 
         switch (argumentParser.getArgumentAtIndex(0).getValue()) {
             case "modules", "m" -> {
-                ModuleManagerImpl moduleManager = ModuleManagerImpl.getInstance();
+                ModuleManager moduleManager = ModularBot.getModuleManager();
 
                 if (argumentParser.hasArgumentAtIndex(1)) {
                     switch (argumentParser.getArgumentAtIndex(1).getValue()) {
