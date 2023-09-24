@@ -22,7 +22,7 @@ repositories {
 
 dependencies {
     // JDA
-    implementation('net.dv8tion:JDA:5.0.0-beta.12') {
+    implementation('net.dv8tion:JDA:5.0.0-beta.13') {
         exclude module: 'opus-java'
     }
 
@@ -102,6 +102,9 @@ tasks.withType(JavaCompile) {
 test {
     useJUnitPlatform();
 }
+
+// Mute missing javadoc warnings
+javadoc.options.addStringOption('Xdoclint:none', '-quiet')
 
 // == Maven publishing == //
 
