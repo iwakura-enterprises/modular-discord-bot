@@ -111,6 +111,7 @@ public class GlobalRateLimiter {
 
             // FROM JDA SOURCE CODE (https://github.com/discord-jda/JDA)
             // JDA IS UNDER Apache-2.0 license
+            /*
             RestRateLimiter recreatedRateLimiter = restConfig.getRateLimiterFactory().apply(new RestRateLimiter.RateLimitConfig(
                     threadConfig.getRateLimitPool(),
                     jdaImpl.getSessionController().getRateLimitHandle(),
@@ -130,7 +131,7 @@ public class GlobalRateLimiter {
 
             Field field = JDAImpl.class.getDeclaredField("requester");
             field.setAccessible(true);
-            field.set(jdaImpl, proxiedRequester);
+            field.set(jdaImpl, proxiedRequester);*/
 
             Logger.info("Hijacked Shard ID " + jdaImpl.getShardInfo().getShardId() + " with proxied Requester.");
         } catch (Exception exception) {

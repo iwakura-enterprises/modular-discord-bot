@@ -4,8 +4,7 @@ import com.google.common.eventbus.EventBus;
 import com.jagrosh.jdautilities.command.CommandClientBuilder;
 import dev.mayuna.mayusjdautils.MayusJDAUtilities;
 import dev.mayuna.mayusjdautils.interactive.InteractiveListener;
-import dev.mayuna.mayuslibrary.exceptionreporting.ExceptionListener;
-import dev.mayuna.mayuslibrary.exceptionreporting.ExceptionReporter;
+import dev.mayuna.mayuslibrary.exceptionreporting.UncaughtExceptionReporter;
 import dev.mayuna.modularbot.console.ConsoleCommandManager;
 import dev.mayuna.modularbot.console.commands.generic.AbstractConsoleCommand;
 import dev.mayuna.modularbot.events.WrappedShardManagerInitializedEvent;
@@ -170,15 +169,11 @@ public class ModularBot {
      * Registers exception reporter
      */
     private static void registerExceptionReporter() {
-        ExceptionReporter.registerExceptionReporter();
-        ExceptionReporter.getInstance().addListener(new ExceptionListener("default", "", exceptionReport -> {
-            // We'll be catching all exceptions - since the empty packageName argument
-
-            Throwable throwable = exceptionReport.getThrowable();
-
-            Logger.get().warn("Uncaught exception occurred! Sending to modules...", throwable);
-            ModuleManagerImpl.getInstance().processException(throwable);
-        }));
+        UncaughtExceptionReporter.register();
+        UncaughtExceptionReporter.addExceptionReportConsumer(exceptionReport -> {
+            Logger.get().warn("Uncaught exception occurred! Sending to modules...", exceptionReport.getThrowable());
+            ModuleManagerImpl.getInstance().processException(exceptionReport.getThrowable());
+        });
     }
 
     ////////////////////
