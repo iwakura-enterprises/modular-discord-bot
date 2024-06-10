@@ -5,6 +5,9 @@ import dev.mayuna.mayusjdautils.styles.MessageInfoStyles;
 import net.dv8tion.jda.api.EmbedBuilder;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Implementation of {@link MessageInfoStyles}
+ */
 public class ModularBotStyles extends MessageInfoStyles {
 
     public ModularBotStyles(MayusJDAUtilities mayusJDAUtilities) {

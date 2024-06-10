@@ -11,7 +11,7 @@ import java.util.function.Function;
 /**
  * Module's presence activity
  */
-public class ModuleActivity {
+public final class ModuleActivity {
 
     private final @Getter Module module;
     private final @Getter String name;

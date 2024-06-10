@@ -15,7 +15,7 @@ import java.nio.file.Path;
  * Module config
  */
 @Getter
-public class ModuleConfig {
+public final class ModuleConfig {
 
     private final Module module;
     private final JsonObject defaultConfig;

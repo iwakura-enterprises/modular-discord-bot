@@ -80,13 +80,13 @@ public final class ModularBot {
 
         LOGGER.info("Phase 5/6 - Preparing JDA...");
 
-        LOGGER.info("Creating ModularBotShardManager...");
+        LOGGER.mdebug("Creating ModularBotShardManager...");
         createModularBotShardManager();
 
-        LOGGER.info("Initializing modules...");
+        LOGGER.mdebug("Initializing modules...");
         initializeModules();
 
-        LOGGER.info("Finishing ModularBotShardManager...");
+        LOGGER.mdebug("Finishing ModularBotShardManager...");
         finishModularBotShardManager();
 
         LOGGER.info("Phase 6/6 - Connecting to Discord...");
@@ -180,10 +180,10 @@ public final class ModularBot {
     private static void loadDataManager() {
         modularBotDataManager = new ModularBotDataManager(config.getStorageSettings());
 
-        LOGGER.info("Preparing DataManager...");
+        LOGGER.mdebug("Preparing DataManager...");
         modularBotDataManager.prepareStorage();
 
-        LOGGER.info("Preparing GlobalDataHolder...");
+        LOGGER.mdebug("Preparing GlobalDataHolder...");
         modularBotDataManager.getGlobalDataHolder();
     }
 
@@ -198,13 +198,13 @@ public final class ModularBot {
      * Initializes Discord stuff such as CommandClientBuilder, etc.
      */
     private static void initializeModules() {
-        LOGGER.info("Processing ConsoleParallax...");
+        LOGGER.mdebug("Processing ConsoleParallax...");
         moduleManager.processConsoleParallax(consoleParallax);
 
-        LOGGER.info("Processing CommandClientBuilder...");
+        LOGGER.mdebug("Processing CommandClientBuilder...");
         moduleManager.processCommandClientBuilder(modularBotShardManager.getCommandClientBuilder());
 
-        LOGGER.info("Processing ShardManagerBuilder...");
+        LOGGER.mdebug("Processing ShardManagerBuilder...");
         moduleManager.processShardBuilder(modularBotShardManager.getShardManagerBuilder());
     }
 
@@ -214,7 +214,7 @@ public final class ModularBot {
     private static void createModularBotShardManager() {
         modularBotShardManager = new ModularBotShardManager(config.getDiscord());
 
-        LOGGER.info("Initializing ModularBotShardManager...");
+        LOGGER.mdebug("Initializing ModularBotShardManager...");
         if (!modularBotShardManager.init()) {
             shutdown();
         }

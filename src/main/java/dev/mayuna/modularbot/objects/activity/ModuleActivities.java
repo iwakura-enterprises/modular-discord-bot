@@ -64,4 +64,13 @@ public final class ModuleActivities {
             return removedSomething;
         }
     }
+
+    /**
+     * Returns unmodifiable list of {@link ModuleActivity}
+     *
+     * @return List of {@link ModuleActivity}
+     */
+    public List<ModuleActivity> getActivities() {
+        return Collections.unmodifiableList(activities);
+    }
 }

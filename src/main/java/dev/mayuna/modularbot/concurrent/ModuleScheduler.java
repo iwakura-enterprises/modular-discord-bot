@@ -22,7 +22,7 @@ public final class ModuleScheduler {
     private final Executor taskExecutor = Executors.newCachedThreadPool();
     private final @Getter Module module;
     private final Map<ModuleTask, Thread> tasks = Collections.synchronizedMap(new HashMap<>());
-    private final ModuleTaskTimer taskTimer = createTimer();
+    private final ModuleTaskTimer taskTimer;
 
     /**
      * Creates new {@link ModuleScheduler}
@@ -31,6 +31,7 @@ public final class ModuleScheduler {
      */
     public ModuleScheduler(@NonNull Module module) {
         this.module = module;
+        taskTimer = createTimer();
     }
 
     /**

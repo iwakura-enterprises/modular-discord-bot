@@ -19,10 +19,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
-import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.PathMatcher;
 import java.util.*;
 import java.util.stream.Stream;
 import java.util.zip.ZipFile;
@@ -30,7 +28,6 @@ import java.util.zip.ZipFile;
 public final class DefaultModuleManager implements ModuleManager {
 
     private final static ModularBotLogger LOGGER = ModularBotLogger.create("ModuleManager");
-    private final static PathMatcher JAR_FILE_PATH_MATCHER = FileSystems.getDefault().getPathMatcher("glob:*.jar");
 
     private final List<ModuleClassLoader> moduleClassLoaders = Collections.synchronizedList(new LinkedList<>());
     private List<Module> modules = createModuleList();
@@ -79,7 +76,7 @@ public final class DefaultModuleManager implements ModuleManager {
 
         List<Path> moduleFiles;
 
-        try (Stream<Path> paths = Files.walk(modulesDirectory)) {
+        try (Stream<Path> paths = Files.walk(modulesDirectory, 1)) {
             moduleFiles = paths
                     .filter(Files::isRegularFile) // Only files
                     .filter(path -> path.getFileName().toString().endsWith(".jar")) // Only jar files
@@ -120,7 +117,7 @@ public final class DefaultModuleManager implements ModuleManager {
         try {
             moduleClassLoader = new ModuleClassLoader(moduleFile, DefaultModuleManager.class.getClassLoader(), moduleClassLoaders);
         } catch (MalformedURLException exception) {
-            LOGGER.error("Failed to create class loader for module: " + moduleFile.getFileName(), exception);
+            LOGGER.error("Failed to create class loader for module: {}", moduleFile.getFileName(), exception);
             return Optional.empty();
         }
 
@@ -168,11 +165,13 @@ public final class DefaultModuleManager implements ModuleManager {
 
             return Optional.of(module);
         } catch (IOException exception) {
-            LOGGER.error("Failed to read module: " + moduleFile.getFileName(), exception);
+            LOGGER.error("Failed to read module: {}", moduleFile.getFileName(), exception);
         } catch (ClassNotFoundException exception) {
-            LOGGER.error("Could not find main class for module: " + moduleFile.getFileName(), exception);
+            LOGGER.error("Could not find main class for module: {}", moduleFile.getFileName(), exception);
         } catch (InvocationTargetException | InstantiationException | IllegalAccessException | NoSuchMethodException exception) {
-            LOGGER.error("Could not create module instance for module: " + moduleFile.getFileName() + " (does the main class have public no-args constructor?)", exception);
+            LOGGER.error("Could not create module instance for module: {} (does the main class have public no-args constructor?)", moduleFile.getFileName(), exception);
+        } catch (Throwable exception) {
+            LOGGER.error("Failed to load module: {}", moduleFile.getFileName(), exception);
         }
 
         return Optional.empty();
@@ -193,7 +192,7 @@ public final class DefaultModuleManager implements ModuleManager {
         try {
             module.onLoad();
         } catch (Exception exception) {
-            LOGGER.error("Exception occurred while loading module " + moduleName + "!", exception);
+            LOGGER.error("Exception occurred while loading module {}!", moduleName, exception);
             module.setModuleStatus(ModuleStatus.FAILED);
 
             // Remove the module's class loader from the list of class loaders
@@ -273,7 +272,7 @@ public final class DefaultModuleManager implements ModuleManager {
         try {
             module.onEnable();
         } catch (Exception exception) {
-            LOGGER.error("Failed to enable module " + moduleInfo.getName() + "!", exception);
+            LOGGER.error("Failed to enable module {}!", moduleInfo.getName(), exception);
             unloadModule(module);
             return;
         }
@@ -302,9 +301,7 @@ public final class DefaultModuleManager implements ModuleManager {
         String moduleName = module.getModuleInfo().getName();
 
         switch (module.getModuleStatus()) {
-            case NOT_LOADED -> {
-                LOGGER.warn("Tried unloading module ({}) which is not loaded!", moduleName);
-            }
+            case NOT_LOADED -> LOGGER.warn("Tried unloading module ({}) which is not loaded!", moduleName);
             case LOADED, ENABLING, DISABLED -> {
                 LOGGER.mdebug("Unloading module {}...", moduleName);
                 module.setModuleStatus(ModuleStatus.UNLOADING);
@@ -312,7 +309,7 @@ public final class DefaultModuleManager implements ModuleManager {
                 try {
                     module.onUnload();
                 } catch (Exception unloadException) {
-                    LOGGER.error("Exception occurred while unloading module " + moduleName + "!", unloadException);
+                    LOGGER.error("Exception occurred while unloading module {}!", moduleName, unloadException);
                 }
 
                 modules.remove(module);
@@ -333,7 +330,7 @@ public final class DefaultModuleManager implements ModuleManager {
                     module.onDisable();
                     module.getModuleScheduler().cancelTasks();
                 } catch (Exception disableException) {
-                    LOGGER.error("Exception occurred while disabling module " + moduleName + "!", disableException);
+                    LOGGER.error("Exception occurred while disabling module {}!", moduleName, disableException);
                 }
 
                 module.setModuleStatus(ModuleStatus.DISABLED);
