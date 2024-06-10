@@ -11,17 +11,18 @@ import java.util.List;
  */
 public final class ModuleClassLoader extends URLClassLoader {
 
-    private final List<ModuleClassLoader> otherClassLoaders;
-
     static {
         ClassLoader.registerAsParallelCapable();
     }
 
+    private final List<ModuleClassLoader> otherClassLoaders;
+
     /**
      * Creates new class loader for specified jar file with specified {@link ClassLoader} as parent
      *
-     * @param jarFile Jar File
-     * @param parent  Parent {@link ClassLoader}
+     * @param jarFile           Jar File
+     * @param parent            Parent {@link ClassLoader}
+     * @param otherClassLoaders Other module's {@link ClassLoader}s
      *
      * @throws MalformedURLException If the jar file could not be converted to URL
      */
@@ -45,6 +46,7 @@ public final class ModuleClassLoader extends URLClassLoader {
         // Load other module's class
         synchronized (otherClassLoaders) {
             for (ModuleClassLoader otherClassLoader : otherClassLoaders) {
+                // Skip own class loader to prevent stack overflows
                 if (otherClassLoader == this) {
                     continue;
                 }
@@ -56,6 +58,7 @@ public final class ModuleClassLoader extends URLClassLoader {
             }
         }
 
+        // Get class from ModularDiscordBot's class loader
         return getParent().loadClass(name);
     }
 }
