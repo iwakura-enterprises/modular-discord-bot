@@ -1,6 +1,6 @@
 package dev.mayuna.modularbot.objects.activity;
 
-import dev.mayuna.modularbot.objects.Module;
+import dev.mayuna.modularbot.base.Module;
 import lombok.Getter;
 import lombok.NonNull;
 import net.dv8tion.jda.api.JDA;

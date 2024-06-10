@@ -1,45 +1,43 @@
 package dev.mayuna.modularbot;
 
-import com.google.common.eventbus.EventBus;
-import com.jagrosh.jdautilities.command.CommandClientBuilder;
+import dev.mayuna.consoleparallax.ConsoleParallax;
 import dev.mayuna.mayusjdautils.MayusJDAUtilities;
-import dev.mayuna.mayusjdautils.interactive.InteractiveListener;
-import dev.mayuna.mayuslibrary.exceptionreporting.ExceptionListener;
-import dev.mayuna.mayuslibrary.exceptionreporting.ExceptionReporter;
-import dev.mayuna.modularbot.console.ConsoleCommandManager;
-import dev.mayuna.modularbot.console.commands.generic.AbstractConsoleCommand;
-import dev.mayuna.modularbot.events.WrappedShardManagerInitializedEvent;
-import dev.mayuna.modularbot.logging.Logger;
-import dev.mayuna.modularbot.managers.DataManager;
-import dev.mayuna.modularbot.managers.ModuleManagerImpl;
-import dev.mayuna.modularbot.managers.WrappedShardManager;
-import dev.mayuna.modularbot.utils.ModularBotConfig;
+import dev.mayuna.mayuslibrary.exceptionreporting.UncaughtExceptionReporter;
+import dev.mayuna.modularbot.base.ModuleManager;
+import dev.mayuna.modularbot.config.ModularBotConfig;
+import dev.mayuna.modularbot.console.ModularConsoleCommand;
+import dev.mayuna.modularbot.console.StopConsoleCommand;
+import dev.mayuna.modularbot.managers.DefaultModuleManager;
+import dev.mayuna.modularbot.util.logging.ModularBotLogger;
+import dev.mayuna.modularbot.managers.ModularBotDataManager;
 import lombok.Getter;
 import lombok.Setter;
-import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder;
 
-public class ModularBot {
+import java.util.concurrent.Executors;
 
-    private static final @Getter EventBus globalEventBus = new EventBus("modular_bot-global");
-    private static @Getter DataManager dataManager;
+public final class ModularBot {
+
+    private static final ModularBotLogger LOGGER = ModularBotLogger.create(ModularBot.class);
+
+    private static @Getter ModularBotConfig config;
+    private static @Getter ConsoleParallax consoleParallax;
+    private static @Getter MayusJDAUtilities baseMayusJDAUtilities;
+    private static @Getter ModuleManager moduleManager;
+    private static @Getter ModularBotDataManager modularBotDataManager;
+    private static @Getter ModularBotShardManager modularBotShardManager;
+
     private static @Getter @Setter boolean stopping;
-    private static @Getter @Setter boolean dontSaveData = false;
-    private static @Getter WrappedShardManager wrappedShardManager;
-    private static @Getter CommandClientBuilder commandClientBuilder;
-    private static @Getter MayusJDAUtilities mayusJDAUtilities = new MayusJDAUtilities();
 
-    /**
-     * Main function of ModularBot
-     *
-     * @param args Arguments
-     */
-    public static void main(String[] args) {
-        if (args != null && args.length > 0) {
-            Logger.warn("There are no args, yet.");
-            return;
-        }
+    private ModularBot() {
+    }
 
-        Logger.info("""
+    static void start(String[] args) {
+        LOGGER.info("Starting ModularDiscordBot @ {}", ModularBotConstants.getVersion());
+        LOGGER.info("Made by Mayuna");
+
+        // TODO: Print java info
+
+        LOGGER.info("""
                             \s
                             \033[0;35m  __  __         _      _            ___  _                   _   ___      _  \s
                             \033[0;35m |  \\/  |___  __| |_  _| |__ _ _ _  |   \\(_)___ __ ___ _ _ __| | | _ ) ___| |_\s
@@ -47,109 +45,79 @@ public class ModularBot {
                             \033[0;35m |_|  |_\\___/\\__,_|\\_,_|_\\__,_|_|   |___/|_/__/\\__\\___/_| \\__,_| |___/\\___/\\__|
                             """);
 
-        Logger.info("@ Version: " + Values.APP_VERSION);
-        Logger.info("Made by Mayuna\n");
-        Logger.info("Loading...");
+        LOGGER.info("Loading...");
+        final long startMillis = System.currentTimeMillis();
 
-        long start = System.currentTimeMillis();
+        LOGGER.info("Phase 1/6 - Loading core...");
 
-        Logger.debug("Loading config...");
-        if (!ModularBotConfig.load()) {
-            shutdownGracefully();
-            return;
-        }
+        LOGGER.mdebug("Loading configuration");
+        loadConfiguration();
 
-        Logger.info("Initializing console commands...");
-        ConsoleCommandManager.init();
+        LOGGER.mdebug("Loading ConsoleParallax");
+        loadConsoleParallax();
 
-        Logger.debug("Registering shutdown hook...");
+        LOGGER.mdebug("Registering Shutdown hook");
         registerShutdownHook();
 
-        Logger.debug("Registering Exception reporter...");
-        registerExceptionReporter();
+        LOGGER.mdebug("Registering UncaughtExceptionReporter");
+        registerUncaughtExceptionReporter();
 
-        Logger.debug("Loading Mayu's JDA Utilities...");
-        loadMayusJdaUtilities();
+        LOGGER.mdebug("Loading Mayu's JDA Utilities");
+        loadMayusJDAUtilities();
 
-        try {
-            ModuleManagerImpl.getInstance().loadModules();
-        } catch (Exception exception) {
-            Logger.get().fatal("Exception occurred while loading modules! Cannot proceed.", exception);
-            shutdownGracefully();
-        }
+        LOGGER.mdebug("Preparing ModuleManager");
+        prepareModuleManager();
 
-        if (ModularBotConfig.getInstance().getData().isEnabled()) {
-            Logger.info("Loading data manager...");
-            dataManager = new DataManager(ModularBotConfig.getInstance().getData().getStorageHandler());
-            Logger.info("Preparing storage...");
-            dataManager.prepareStorage();
+        LOGGER.info("Phase 2/6 - Loading modules...");
+        loadModules();
 
-            Logger.info("Loading global data holder...");
-            dataManager.getGlobalDataHolder();
-        }
+        LOGGER.info("Phase 3/6 - Loading DataManager...");
+        loadDataManager();
 
-        try {
-            ModuleManagerImpl.getInstance().enableModules();
-        } catch (Exception exception) {
-            Logger.get().fatal("Exception occurred while enabling modules! Cannot proceed.", exception);
-            shutdownGracefully();
-        }
+        LOGGER.info("Phase 4/6 - Enabling modules...");
+        enableModules();
 
-        initJDAUtilities();
-        initJDA();
+        LOGGER.info("Phase 5/6 - Preparing JDA...");
 
-        Logger.success("Modular Discord Bot has finished loading! (Took " + (System.currentTimeMillis() - start) + "ms)");
-    }
+        LOGGER.info("Creating ModularBotShardManager...");
+        createModularBotShardManager();
 
-    /////////////////////
-    // Private methods //
-    /////////////////////
+        LOGGER.info("Initializing modules...");
+        initializeModules();
 
-    private static void loadMayusJdaUtilities() {
-        mayusJDAUtilities = new MayusJDAUtilities();
+        LOGGER.info("Finishing ModularBotShardManager...");
+        finishModularBotShardManager();
 
-        mayusJDAUtilities.setMessageInfoStyles(new ModularBotStyles(mayusJDAUtilities));
+        LOGGER.info("Phase 6/6 - Connecting to Discord...");
+        connectToDiscord();
+
+        LOGGER.success("Successfully started ModularDiscordBot (took {}ms)", (System.currentTimeMillis() - startMillis));
+
+        LOGGER.info("Initializing Presence Activity Cycle...");
+        initializePresenceActivityCycle();
     }
 
     /**
-     * Initializes JDA Chewtils
+     * Loads configuration
      */
-    private static void initJDAUtilities() {
-        Logger.info("Initializing JDA Utilities...");
+    private static void loadConfiguration() {
+        config = ModularBotConfig.load();
 
-        commandClientBuilder = new CommandClientBuilder()
-                .setOwnerId(ModularBotConfig.getInstance().getBot().getOwnerId())
-                .setActivity(null);
-
-        ModuleManagerImpl.getInstance().processCommandClientBuilder(commandClientBuilder);
+        // Failed to load
+        if (config == null) {
+            shutdown();
+        }
     }
 
     /**
-     * Initializes JDA Shard Manager
+     * Loads ConsoleParallax
      */
-    private static void initJDA() {
-        Logger.info("Initializing JDA Shard Manager with " + ModularBotConfig.getInstance().getBot().getTotalShards() + " shards...");
-
-        var shardManagerBuilder = DefaultShardManagerBuilder.createLight(ModularBotConfig.getInstance().getBot().getToken())
-                                                            .setShardsTotal(ModularBotConfig.getInstance().getBot().getTotalShards())
-                                                            .addEventListeners(commandClientBuilder.build())
-                                                            .addEventListeners(new InteractiveListener());
-
-        ModuleManagerImpl.getInstance().processShardBuilder(shardManagerBuilder);
-
-        try {
-            wrappedShardManager = new WrappedShardManager(shardManagerBuilder.build());
-        } catch (Exception exception) {
-            Logger.get().fatal("Exception occurred while build Shard Manager! Cannot proceed.", exception);
-            shutdownGracefully();
-            return;
-        }
-
-        getGlobalEventBus().post(new WrappedShardManagerInitializedEvent(wrappedShardManager));
-
-        if (ModularBotConfig.getInstance().getBot().isWaitOnAllShards()) {
-            wrappedShardManager.waitOnAllShards();
-        }
+    private static void loadConsoleParallax() {
+        consoleParallax = ConsoleParallax.builder().setCommandExecutor(Executors.newCachedThreadPool()).build();
+        consoleParallax.registerDefaultHelpCommand();
+        consoleParallax.registerCommand(new ModularConsoleCommand());
+        consoleParallax.registerCommand(new StopConsoleCommand());
+        consoleParallax.start();
     }
 
     /**
@@ -158,10 +126,10 @@ public class ModularBot {
     private static void registerShutdownHook() {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             if (!stopping) {
-                Logger.warn("Modular Discord Bot has not stopped gracefully! Please, use command 'stop' to stop the application. There is a chance that the modules won't be unloaded fully before JVM termination.");
+                LOGGER.warn("Modular Discord Bot has not stopped gracefully! Please, use command 'stop' to stop the application. There is a chance that the modules won't be unloaded fully before JVM termination.");
 
-                Logger.info("Shutting down Modular Discord Bot...");
-                doAllShutdownProcedures();
+                LOGGER.info("Shutting down Modular Discord Bot...");
+                shutdown();
             }
         }));
     }
@@ -169,84 +137,129 @@ public class ModularBot {
     /**
      * Registers exception reporter
      */
-    private static void registerExceptionReporter() {
-        ExceptionReporter.registerExceptionReporter();
-        ExceptionReporter.getInstance().addListener(new ExceptionListener("default", "", exceptionReport -> {
-            // We'll be catching all exceptions - since the empty packageName argument
-
-            Throwable throwable = exceptionReport.getThrowable();
-
-            Logger.get().warn("Uncaught exception occurred! Sending to modules...", throwable);
-            ModuleManagerImpl.getInstance().processException(throwable);
-        }));
+    private static void registerUncaughtExceptionReporter() {
+        UncaughtExceptionReporter.register();
+        UncaughtExceptionReporter.addExceptionReportConsumer(exceptionReport -> {
+            LOGGER.warn("Uncaught exception occurred! Sending to modules...", exceptionReport.getThrowable());
+            moduleManager.processException(exceptionReport.getThrowable());
+        });
     }
-
-    ////////////////////
-    // Public methods //
-    ////////////////////
 
     /**
-     * Shutdowns Modular Discord Bot gracefully. Run this if you want to stop this application!
+     * Loads {@link MayusJDAUtilities}
      */
-    public static void shutdownGracefully() {
-        restartBot(true);
+    private static void loadMayusJDAUtilities() {
+        baseMayusJDAUtilities = new MayusJDAUtilities();
+        baseMayusJDAUtilities.setMessageInfoStyles(new ModularBotStyles(baseMayusJDAUtilities));
     }
 
-    public static void restartBot(boolean shutdown) {
-        ModularBot.setStopping(true);
-
-        Logger.info("Shutting down Modular Discord Bot gracefully...");
-
-        doAllShutdownProcedures();
-
-        if (shutdown) {
-            System.exit(0);
-        } else {
-            Logger.warn("Restarting can cause issues. Use at your own risk!");
-            new Thread(() -> {
-                ModularBot.main(null);
-            }).start();
-        }
+    /**
+     * Prepares module manager
+     */
+    private static void prepareModuleManager() {
+        moduleManager = new DefaultModuleManager();
     }
 
-    private static void doAllShutdownProcedures() {
-        ModuleManagerImpl.getInstance().unloadModules();
-
-        if (wrappedShardManager != null) {
-            wrappedShardManager.getInstance().shutdown();
-            wrappedShardManager.getShardRestartTimer().cancel();
+    /**
+     * Loads modules
+     */
+    private static void loadModules() {
+        if (!moduleManager.loadModules()) {
+            shutdown();
         }
     }
 
     /**
-     * Registers console command
-     *
-     * @param abstractConsoleCommands {@link AbstractConsoleCommand}s
+     * Loads DataManager
      */
-    public static void registerConsoleCommands(AbstractConsoleCommand... abstractConsoleCommands) {
-        ConsoleCommandManager.registerCommands(abstractConsoleCommands);
+    private static void loadDataManager() {
+        modularBotDataManager = new ModularBotDataManager(config.getStorageSettings());
+
+        LOGGER.info("Preparing DataManager...");
+        modularBotDataManager.prepareStorage();
+
+        LOGGER.info("Preparing GlobalDataHolder...");
+        modularBotDataManager.getGlobalDataHolder();
     }
 
-    /////////////
-    // Getters //
-    /////////////
-
-    public static ModuleManagerImpl getModuleManager() {
-        return ModuleManagerImpl.getInstance();
+    /**
+     * Enables modules
+     */
+    private static void enableModules() {
+        moduleManager.enableModules();
     }
 
-    ///////////////////
-    // Other Classes //
-    ///////////////////
+    /**
+     * Initializes Discord stuff such as CommandClientBuilder, etc.
+     */
+    private static void initializeModules() {
+        LOGGER.info("Processing ConsoleParallax...");
+        moduleManager.processConsoleParallax(consoleParallax);
 
-    public static class Values {
+        LOGGER.info("Processing CommandClientBuilder...");
+        moduleManager.processCommandClientBuilder(modularBotShardManager.getCommandClientBuilder());
 
-        public static String APP_VERSION = "b1.5.15";
-        private static @Getter @Setter String pathFolderModules = "./modules/";
-        private static @Getter @Setter String pathFolderModuleConfigs = "./modules/%s/";
-        private static @Getter @Setter String pathFolderJsonData = "./json_data/";
-        private static @Getter @Setter String fileNameConfig = "./modular_bot.json";
-        private static @Getter @Setter String fileNameModuleInfo = "module_info.json";
-        private static @Getter @Setter String fileNameModuleConfig = "config.json";
+        LOGGER.info("Processing ShardManagerBuilder...");
+        moduleManager.processShardBuilder(modularBotShardManager.getShardManagerBuilder());
+    }
+
+    /**
+     * Creates ShardManager
+     */
+    private static void createModularBotShardManager() {
+        modularBotShardManager = new ModularBotShardManager(config.getDiscord());
+
+        LOGGER.info("Initializing ModularBotShardManager...");
+        if (!modularBotShardManager.init()) {
+            shutdown();
+        }
+    }
+
+    /**
+     * Builds shard manager
+     */
+    private static void finishModularBotShardManager() {
+        if (!modularBotShardManager.finish()) {
+            shutdown();
+        }
+    }
+
+    /**
+     * Connects to Discord
+     */
+    private static void connectToDiscord() {
+        if (!modularBotShardManager.connect()) {
+            shutdown();
+        }
+    }
+
+    /**
+     * Initializes Presence Activity Cycle
+     */
+    private static void initializePresenceActivityCycle() {
+        modularBotShardManager.initPresenceActivityCycle();
+    }
+
+    /**
+     * Shutdowns ModularDiscordBot
+     */
+    public static void shutdown() {
+        stopping = true;
+
+        LOGGER.info("Shutting down ModularDiscordBot @ {}", ModularBotConstants.getVersion());
+
+        LOGGER.info("Shutting down ConsoleParallax...");
+        consoleParallax.interrupt();
+
+        LOGGER.info("Unloading modules...");
+        moduleManager.unloadModules();
+
+        LOGGER.info("Disconnecting from Discord...");
+        if (modularBotShardManager != null) {
+            modularBotShardManager.shutdown();
+        }
+
+        LOGGER.success("Shutdown completed");
+        Runtime.getRuntime().halt(0);
     }
 }

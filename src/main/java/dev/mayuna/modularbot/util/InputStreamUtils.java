@@ -1,19 +1,25 @@
-package dev.mayuna.modularbot.utils;
+package dev.mayuna.modularbot.util;
 
 import lombok.NonNull;
 
+import java.io.BufferedReader;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.Enumeration;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-public class ZipUtil {
+public final class InputStreamUtils {
+
+    private InputStreamUtils() {
+    }
 
     /**
      * Tries to find specified name in specified {@link ZipFile}
      *
-     * @param zipFile Non-null {@link ZipFile}
+     * @param zipFile  Non-null {@link ZipFile}
      * @param fileName Non-null file name
      *
      * @return Nullable {@link InputStream}
@@ -34,5 +40,16 @@ public class ZipUtil {
         }
 
         return null;
+    }
+
+    /**
+     * Reads {@link InputStream} as a string
+     *
+     * @param inputStream Non-null {@link InputStream}
+     *
+     * @return String
+     */
+    public static String readStreamAsString(@NonNull InputStream inputStream) {
+        return new BufferedReader(new InputStreamReader(inputStream)).lines().collect(Collectors.joining());
     }
 }

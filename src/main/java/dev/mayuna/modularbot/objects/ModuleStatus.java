@@ -9,5 +9,6 @@ public enum ModuleStatus {
     ENABLED,
     DISABLING,
     DISABLED,
-    UNLOADING;
+    UNLOADING,
+    FAILED;
 }

@@ -1,19 +1,18 @@
 plugins {
     id 'java'
-    id 'application'
     id 'java-library'
     id 'signing'
     id 'maven-publish'
-    id "com.github.johnrengelman.shadow" version "7.1.2"
+    id "com.github.johnrengelman.shadow" version "8.1.1"
     id "io.github.gradle-nexus.publish-plugin" version "1.1.0"
+    id 'jacoco'
+    id 'jacoco-report-aggregation'
 }
 
 group 'dev.mayuna'
-version 'b1.5.15'
-mainClassName = "dev.mayuna.modularbot.ModularBot"
+version '2.0'
 
 repositories {
-    flatDir { dirs 'libs' }
     mavenCentral()
 
     maven { url "https://m2.chew.pro/snapshots" }
@@ -22,58 +21,44 @@ repositories {
 
 dependencies {
     // JDA
-    implementation('net.dv8tion:JDA:5.0.0-beta.13') {
-        exclude module: 'opus-java'
-    }
+    implementation 'net.dv8tion:JDA:5.0.0-beta.24'
 
     // JDA Chewutils
-    implementation "pw.chew:jda-chewtils:2.0-SNAPSHOT"
+    implementation 'pw.chew:jda-chewtils:2.0-SNAPSHOT'
 
     // Personal libraries
     implementation 'dev.mayuna:mayus-jda-utilities:3.3.1'
-    implementation 'dev.mayuna:mayus-library:2.0.1'
-    implementation 'dev.mayuna:mayus-json-utilities:1.3.2'
-    implementation 'dev.mayuna:pumpk1n:2.1.1-hotfix1'
+    implementation 'dev.mayuna:mayus-library:3.1'
+    implementation 'dev.mayuna:mayus-json-utilities:2.1'
+    implementation 'dev.mayuna:pumpk1n:2.2.1'
+    implementation 'dev.mayuna:console-parallax:1.0.1'
 
     // SLF4J
-    implementation 'org.apache.logging.log4j:log4j-slf4j2-impl:2.19.0'
-    implementation 'org.apache.logging.log4j:log4j-api:2.19.0'
-    implementation 'org.apache.logging.log4j:log4j-core:2.19.0'
+    implementation 'org.apache.logging.log4j:log4j-slf4j2-impl:2.23.1'
+    implementation 'org.apache.logging.log4j:log4j-api:2.23.1'
+    implementation 'org.apache.logging.log4j:log4j-core:2.23.1'
 
     // GSON
-    implementation 'com.google.code.gson:gson:2.10'
-
-    // Guava
-    implementation 'com.google.guava:guava:31.1-jre'
+    implementation 'com.google.code.gson:gson:2.11.0'
 
     // SQLite
-    implementation 'org.xerial:sqlite-jdbc:3.39.3.0'
-
-    // JCL2
-    implementation 'org.xeustechnologies:jcl-core:2.8'
-
-    // Javassist
-    implementation 'org.javassist:javassist:3.29.2-GA'
+    implementation 'org.xerial:sqlite-jdbc:3.46.0.0'
 
     // HikariCP
-    implementation 'com.zaxxer:HikariCP:5.0.1'
+    implementation 'com.zaxxer:HikariCP:5.1.0'
 
     // MySQL
-    implementation 'mysql:mysql-connector-java:8.0.30'
+    implementation 'com.mysql:mysql-connector-j:8.4.0'
 
     // Lombok
-    compileOnly 'org.projectlombok:lombok:1.18.24'
-    annotationProcessor 'org.projectlombok:lombok:1.18.24'
-    testCompileOnly 'org.projectlombok:lombok:1.18.24'
-    testAnnotationProcessor 'org.projectlombok:lombok:1.18.24'
-
-    // Apache Commons Lang
-    testImplementation 'org.apache.commons:commons-lang3:3.12.0'
+    compileOnly 'org.projectlombok:lombok:1.18.+'
+    annotationProcessor 'org.projectlombok:lombok:1.18.+'
+    testCompileOnly 'org.projectlombok:lombok:1.18.+'
+    testAnnotationProcessor 'org.projectlombok:lombok:1.18.+'
 
     // JUnit
-    testImplementation 'org.junit.platform:junit-platform-launcher:1.9.0'
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.0'
-    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.9.0'
+    testImplementation platform('org.junit:junit-bom:5.10.0')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
 }
 
 // == Quick tasks == //
@@ -84,27 +69,22 @@ task publishCloseAndRelease() {
 }
 
 shadowJar {
-    archiveName = 'modular-discord-bot.jar'
+    archiveFileName = "modular-discord-bot.jar"
 
     manifest {
-        attributes 'Main-Class': 'dev.mayuna.modularbot.ModularBot'
+        attributes 'Main-Class': 'dev.mayuna.modularbot.Main'
     }
 }
 
 test {
     useJUnitPlatform()
+    finalizedBy jacocoTestReport
 }
 
+// UTF-8
 tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
 }
-
-test {
-    useJUnitPlatform();
-}
-
-// Mute missing javadoc warnings
-javadoc.options.addStringOption('Xdoclint:none', '-quiet')
 
 // == Maven publishing == //
 
@@ -150,8 +130,8 @@ publishing {
         repositories {
             maven {
                 credentials {
-                    username = "$ossrhUsername"
-                    password = "$ossrhPassword"
+                    username = project.properties['ossrhUsername'] ?: System.getenv('ossrhUsername')
+                    password = project.properties['ossrhPassword'] ?: System.getenv('ossrhPassword')
                 }
 
                 url = "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/"
@@ -161,6 +141,9 @@ publishing {
 }
 
 signing {
+    def signingKey = findProperty("signingKey")
+    def signingPassword = findProperty("signingPassword")
+    useInMemoryPgpKeys(signingKey, signingPassword)
     sign publishing.publications.shadow
 }
 
@@ -169,8 +152,8 @@ nexusPublishing {
         sonatype {
             nexusUrl.set(uri("https://s01.oss.sonatype.org/service/local/"))
             snapshotRepositoryUrl.set(uri("https://s01.oss.sonatype.org/content/repositories/snapshots/"))
-            username = "$ossrhUsername"
-            password = "$ossrhPassword"
+            username = project.properties['ossrhUsername'] ?: System.getenv('ossrhUsername')
+            password = project.properties['ossrhPassword'] ?: System.getenv('ossrhPassword')
         }
     }
 }

@@ -1,17 +1,28 @@
 package dev.mayuna.modularbot.base;
 
 import com.jagrosh.jdautilities.command.CommandClientBuilder;
-import dev.mayuna.modularbot.logging.Logger;
-import dev.mayuna.modularbot.objects.Module;
+import dev.mayuna.consoleparallax.ConsoleParallax;
+import dev.mayuna.modularbot.util.logging.ModularBotLogger;
 import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder;
 
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Module manager
+ */
 public interface ModuleManager {
 
     /**
+     * Returns ModuleManager's logger
+     *
+     * @return {@link ModularBotLogger}
+     */
+    ModularBotLogger getLogger();
+
+    /**
      * Returns list of loaded modules in memory.
+     *
      * @return List of modules
      */
     List<Module> getModules();
@@ -23,7 +34,9 @@ public interface ModuleManager {
      *
      * @return True if module is loaded in memory, false otherwise
      */
-    boolean isModuleLoaded(String moduleName);
+    default boolean isModuleLoaded(String moduleName) {
+        return getModuleByName(moduleName).orElse(null) != null;
+    }
 
     /**
      * Gets {@link Module} from loaded modules in memory by module name
@@ -32,15 +45,17 @@ public interface ModuleManager {
      *
      * @return Returns optional of {@link Module}
      */
-    Optional<Module> getModuleByName(String moduleName);
+    default Optional<Module> getModuleByName(String moduleName) {
+        return getModules().stream().filter(module -> module.getModuleInfo().getName().equals(moduleName)).findAny();
+    }
 
     /**
      * Loads modules from file system to memory. This method must not call {@link Module#onLoad()}<br> If called again, firstly all loaded modules are
      * disabled (if needed) and unloaded, then it proceeds normally.
      *
-     * @return Returns list of loaded modules
+     * @return Returns if the loading was successful
      */
-    List<Module> loadModules();
+    boolean loadModules();
 
     /**
      * Loads module (must call {@link Module#onLoad()}
@@ -77,6 +92,10 @@ public interface ModuleManager {
         getModules().forEach(module -> module.onCommandClientBuilderInitialization(commandClientBuilder));
     }
 
+    default void processConsoleParallax(ConsoleParallax consoleParallax) {
+        getModules().forEach(module -> module.onConsoleCommandRegistration(consoleParallax));
+    }
+
     default void processShardBuilder(DefaultShardManagerBuilder shardManagerBuilder) {
         getModules().forEach(module -> module.onShardManagerBuilderInitialization(shardManagerBuilder));
     }
@@ -85,7 +104,7 @@ public interface ModuleManager {
         getModules().forEach(module -> {
             try {
                 for (var stackTraceElement : throwable.getStackTrace()) {
-                    for (String packageName : module.getModuleInfo().exceptionHandlingPackages()) {
+                    for (String packageName : module.getModuleInfo().getExceptionHandlingPackages()) {
                         if (stackTraceElement.getClassName().contains(packageName)) {
                             module.onUncaughtException(throwable);
                             return;
@@ -93,7 +112,7 @@ public interface ModuleManager {
                     }
                 }
             } catch (Exception exception) {
-                Logger.get().error("Exception occurred while processing modules with uncaught exception!", exception);
+                getLogger().error("Exception occurred while processing modules with uncaught exception!", exception);
             }
         });
     }

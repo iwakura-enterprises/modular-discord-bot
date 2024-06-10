@@ -1,6 +1,4 @@
-package dev.mayuna.modularbot.concurrent;
-
-import dev.mayuna.modularbot.objects.Module;
+package dev.mayuna.modularbot.base;
 
 import java.util.UUID;
 

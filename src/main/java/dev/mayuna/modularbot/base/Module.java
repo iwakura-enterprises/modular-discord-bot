@@ -1,26 +1,33 @@
-package dev.mayuna.modularbot.objects;
+package dev.mayuna.modularbot.base;
 
 import com.jagrosh.jdautilities.command.CommandClientBuilder;
+import dev.mayuna.consoleparallax.ConsoleParallax;
 import dev.mayuna.mayusjdautils.MayusJDAUtilities;
 import dev.mayuna.modularbot.concurrent.ModularScheduler;
-import dev.mayuna.modularbot.logging.MayuLogger;
+import dev.mayuna.modularbot.util.logging.ModularBotLogger;
+import dev.mayuna.modularbot.objects.ModuleConfig;
+import dev.mayuna.modularbot.objects.ModuleInfo;
+import dev.mayuna.modularbot.objects.ModuleStatus;
 import dev.mayuna.modularbot.objects.activity.ModuleActivities;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
 import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder;
 
+import java.util.jar.JarFile;
+
+@Getter
+@Setter
 public abstract class Module {
 
-    private final @Getter ModuleActivities moduleActivities = new ModuleActivities(this);
+    private final ModuleActivities moduleActivities = new ModuleActivities(this);
 
-    private @Getter @Setter ModuleInfo moduleInfo;
-    private @Getter @Setter ModuleStatus moduleStatus;
-    private @Getter @Setter ModuleConfig moduleConfig;
-    private @Getter @Setter MayuLogger logger;
-    private @Getter @Setter MayusJDAUtilities mayusJDAUtilities;
-
-    private @Getter @Setter ModularScheduler scheduler;
+    private ModuleInfo moduleInfo;
+    private ModuleStatus moduleStatus;
+    private ModuleConfig moduleConfig;
+    private ModularBotLogger logger;
+    private MayusJDAUtilities mayusJDAUtilities;
+    private ModularScheduler scheduler;
 
     /**
      * This method is called when the module is loaded
@@ -62,6 +69,14 @@ public abstract class Module {
      */
     public void onShardManagerBuilderInitialization(@NonNull DefaultShardManagerBuilder shardManagerBuilder) {
         // Empty
+    }
+
+    /**
+     * This method is called when Modular Bot is registering console commands
+     *
+     * @param consoleParallax Non-null {@link ConsoleParallax}
+     */
+    public void onConsoleCommandRegistration(@NonNull ConsoleParallax consoleParallax) {
     }
 
     /**

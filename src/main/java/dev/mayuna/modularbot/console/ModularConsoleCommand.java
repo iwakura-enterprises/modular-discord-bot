@@ -1,21 +1,21 @@
-package dev.mayuna.modularbot.console.commands.basic;
+package dev.mayuna.modularbot.console;
 
-import dev.mayuna.mayuslibrary.arguments.ArgumentParser;
+import dev.mayuna.consoleparallax.BaseCommand;
+import dev.mayuna.consoleparallax.CommandInvocationContext;
 import dev.mayuna.modularbot.ModularBot;
-import dev.mayuna.modularbot.console.commands.generic.AbstractConsoleCommand;
-import dev.mayuna.modularbot.console.commands.generic.CommandResult;
-import dev.mayuna.modularbot.logging.Logger;
-import dev.mayuna.modularbot.managers.ModuleManagerImpl;
-import dev.mayuna.modularbot.managers.WrappedShardManager;
-import dev.mayuna.modularbot.objects.Module;
+import dev.mayuna.modularbot.base.Module;
+import dev.mayuna.modularbot.base.ModuleManager;
+import dev.mayuna.modularbot.util.logging.ModularBotLogger;
 import dev.mayuna.modularbot.objects.ModuleInfo;
-import net.dv8tion.jda.api.JDA;
-import net.dv8tion.jda.api.sharding.ShardManager;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class ModularConsoleCommand extends AbstractConsoleCommand {
+public class ModularConsoleCommand implements BaseCommand {
 
+    private static final ModularBotLogger LOGGER = ModularBotLogger.create(ModularConsoleCommand.class);
+
+    /*
     public ModularConsoleCommand() {
         this.name = "modular";
         this.syntax = "<modules(m)[unload(u) <module>|load(l) <module>|reload(r)]|shards(s)[verbose(v)]|restart(r)>";
@@ -161,5 +161,75 @@ public class ModularConsoleCommand extends AbstractConsoleCommand {
 
         Logger.warn("If you want to (re)load commands or events, you must restart the bot.");
         return CommandResult.SUCCESS;
+    }*/
+
+    @Override
+    public @NotNull String getName() {
+        return "modular";
+    }
+
+    @Override
+    public @NotNull String getUsage() {
+        return "Manages ModularDiscordBot";
+    }
+
+    @Override
+    public @NotNull String getSyntax() {
+        return "<modules(m)[unload(u) <module>|load(l) <module>|reload(r)]|shards(s)[verbose(v)]|restart(r)>";
+    }
+
+    @Override
+    public @NotNull String getDescription() {
+        return "Allows you to manage ModularDiscordBot's modules and see other various information.";
+    }
+
+    @Override
+    public void execute(@NotNull CommandInvocationContext commandInvocationContext) {
+        final String[] args = commandInvocationContext.getArguments();
+
+        if (args.length == 0) {
+            LOGGER.error("No arguments specified. Syntax: {}", getSyntax());
+            return;
+        }
+
+        switch (args[0]) {
+            case "modules", "m" -> {
+                if (args.length == 1) {
+                    showAllModules();
+                    return;
+                }
+
+                if (args.length != 3) {
+                    LOGGER.error("Invalid modules arguments. Syntax: {}", getSyntax());
+                    return;
+                }
+
+                processModuleSubCommand(args[1], args[2]);
+            }
+            case "shards", "s" -> {
+                // TODO
+            }
+        }
+    }
+
+    private void processModuleSubCommand(String action, String moduleName) {
+        // TODO
+    }
+
+    /**
+     * Shows all modules
+     */
+    private void showAllModules() {
+        ModuleManager moduleManager = ModularBot.getModuleManager();
+        List<Module> modules = moduleManager.getModules();
+
+        LOGGER.info("== Modules - {} ==", modules.size());
+        modules.forEach(module -> {
+            ModuleInfo moduleInfo;
+
+            // TODO:
+        });
+
+        LOGGER.info("Listing modules done.");
     }
 }
