@@ -15,7 +15,7 @@ import java.util.concurrent.Executors;
 /**
  * Scheduler for Module's tasks
  */
-public class ModuleScheduler {
+public final class ModuleScheduler {
 
     public static final String THREAD_NAME_FORMAT = ModuleScheduler.class.getSimpleName() + "-Task-%s";
 

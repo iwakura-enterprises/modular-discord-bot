@@ -151,7 +151,7 @@ public final class DefaultModuleManager implements ModuleManager {
             module.setModuleInfo(moduleInfo);
             module.setModuleStatus(ModuleStatus.NOT_LOADED);
             module.setModuleConfig(new ModuleConfig(module, defaultConfig));
-            module.setScheduler(new ModuleScheduler(module));
+            module.setModuleScheduler(new ModuleScheduler(module));
             module.setLogger(ModularBotLogger.create(module.getModuleInfo().getName()));
 
             var mayusJdaUtilities = new MayusJDAUtilities();
@@ -331,7 +331,7 @@ public final class DefaultModuleManager implements ModuleManager {
 
                 try {
                     module.onDisable();
-                    module.getScheduler().cancelTasks();
+                    module.getModuleScheduler().cancelTasks();
                 } catch (Exception disableException) {
                     LOGGER.error("Exception occurred while disabling module " + moduleName + "!", disableException);
                 }

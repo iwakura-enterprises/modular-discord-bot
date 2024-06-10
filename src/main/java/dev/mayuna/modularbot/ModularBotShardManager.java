@@ -4,7 +4,7 @@ import com.jagrosh.jdautilities.command.CommandClientBuilder;
 import dev.mayuna.mayusjdautils.interactive.InteractiveListener;
 import dev.mayuna.modularbot.config.ModularBotConfig;
 import dev.mayuna.modularbot.objects.ModuleStatus;
-import dev.mayuna.modularbot.objects.activity.ModularActivity;
+import dev.mayuna.modularbot.objects.activity.ModuleActivity;
 import dev.mayuna.modularbot.util.logging.ModularBotLogger;
 import lombok.Getter;
 import lombok.NonNull;
@@ -162,11 +162,11 @@ public final class ModularBotShardManager {
         presenceActivityUpdaterTimer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
-                List<ModularActivity> allActivities = new LinkedList<>();
+                List<ModuleActivity> allActivities = new LinkedList<>();
 
                 ModularBot.getModuleManager().getModules().forEach(module -> {
                     if (module.getModuleStatus() == ModuleStatus.ENABLED) {
-                        List<ModularActivity> activities = module.getModuleActivities().getActivities();
+                        List<ModuleActivity> activities = module.getModuleActivities().getActivities();
 
                         synchronized (activities) {
                             allActivities.addAll(activities);
@@ -185,15 +185,15 @@ public final class ModularBotShardManager {
                     lastActivityIndex++;
                 }
 
-                ModularActivity modularActivity = allActivities.get(lastActivityIndex);
+                ModuleActivity moduleActivity = allActivities.get(lastActivityIndex);
 
                 shardManager.getShardCache().forEach(jda -> {
                     try {
-                        jda.getPresence().setActivity(modularActivity.getOnActivityRefresh().apply(jda));
+                        jda.getPresence().setActivity(moduleActivity.getOnActivityRefresh().apply(jda));
                     } catch (Exception exception) {
                         LOGGER.error("Failed to set activity from module {} with activity name of {} on shard ID {}",
-                                     modularActivity.getModule().getModuleInfo().getName(),
-                                     modularActivity.getName(),
+                                     moduleActivity.getModule().getModuleInfo().getName(),
+                                     moduleActivity.getName(),
                                      jda.getShardInfo().getShardId()
                         );
                     }

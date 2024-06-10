@@ -6,8 +6,7 @@ public class TestModule extends Module {
 
     @Override
     public void onEnable() {
-        getScheduler().runAsync();
-        getScheduler().
+        getModuleScheduler().runAsync();
     }
 
     @Override

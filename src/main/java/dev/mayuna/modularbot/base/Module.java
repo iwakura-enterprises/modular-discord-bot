@@ -25,7 +25,7 @@ public abstract class Module {
     private ModuleConfig moduleConfig;
     private ModularBotLogger logger;
     private MayusJDAUtilities mayusJDAUtilities;
-    private ModuleScheduler scheduler;
+    private ModuleScheduler moduleScheduler;
 
     /**
      * This method is called when the module is loaded

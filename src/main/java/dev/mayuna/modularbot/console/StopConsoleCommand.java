@@ -5,7 +5,7 @@ import dev.mayuna.consoleparallax.CommandInvocationContext;
 import dev.mayuna.modularbot.ModularBot;
 import org.jetbrains.annotations.NotNull;
 
-public class StopConsoleCommand implements BaseCommand {
+public final class StopConsoleCommand implements BaseCommand {
 
     @Override
     public @NotNull String getName() {

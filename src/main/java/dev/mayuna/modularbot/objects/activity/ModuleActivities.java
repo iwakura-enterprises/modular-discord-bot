@@ -1,20 +1,30 @@
 package dev.mayuna.modularbot.objects.activity;
 
 import dev.mayuna.modularbot.base.Module;
-import lombok.Getter;
 import lombok.NonNull;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Activity;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.function.Function;
 
-public class ModuleActivities {
+/**
+ * Manages Module's Presence Activities
+ */
+public final class ModuleActivities {
 
-    private final @Getter List<ModularActivity> activities = Collections.synchronizedList(new LinkedList<>());
+    private final List<ModuleActivity> activities = Collections.synchronizedList(new LinkedList<>());
     private final Module module;
 
-    public ModuleActivities(Module module) {
+    /**
+     * Creates new {@link ModuleActivities}
+     *
+     * @param module Non-null {@link Module}
+     */
+    public ModuleActivities(@NonNull Module module) {
         this.module = module;
     }
 
@@ -24,9 +34,9 @@ public class ModuleActivities {
      * @param name              Non-null activity name
      * @param onActivityRefresh Non-null {@link Function} with {@link JDA} (shard) as an argument and {@link Activity} as a return value
      */
-    public void addActivity(@NonNull String name, @NonNull Function<JDA, Activity> onActivityRefresh) {
+    public void createActivity(@NonNull String name, @NonNull Function<JDA, Activity> onActivityRefresh) {
         removeActivity(name);
-        activities.add(new ModularActivity(module, name, onActivityRefresh));
+        activities.add(new ModuleActivity(module, name, onActivityRefresh));
     }
 
     /**
@@ -38,12 +48,12 @@ public class ModuleActivities {
      */
     public boolean removeActivity(@NonNull String name) {
         synchronized (activities) {
-            Iterator<ModularActivity> iterator = activities.listIterator();
+            Iterator<ModuleActivity> iterator = activities.listIterator();
 
             boolean removedSomething = false;
-            
+
             while (iterator.hasNext()) {
-                ModularActivity activity = iterator.next();
+                ModuleActivity activity = iterator.next();
 
                 if (activity.getName().equals(name)) {
                     iterator.remove();

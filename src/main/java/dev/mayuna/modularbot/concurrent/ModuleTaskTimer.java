@@ -11,7 +11,7 @@ import java.util.UUID;
 /**
  * Holds task which is run on a {@link Timer}
  */
-public class ModuleTaskTimer implements ModuleTask {
+public final class ModuleTaskTimer implements ModuleTask {
 
     private final UUID uuid = UUID.randomUUID();
     private final Module owner;
@@ -65,7 +65,7 @@ public class ModuleTaskTimer implements ModuleTask {
         instance.purge();
         running = false;
         cancelled = true;
-        owner.getScheduler().removeTask(this);
+        owner.getModuleScheduler().removeTask(this);
     }
 
     @Override

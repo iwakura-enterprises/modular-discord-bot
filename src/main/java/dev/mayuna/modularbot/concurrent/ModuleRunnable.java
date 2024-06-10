@@ -63,7 +63,7 @@ public final class ModuleRunnable implements ModuleTask {
      */
     @Override
     public void cancel() {
-        owner.getScheduler().removeTask(this);
+        owner.getModuleScheduler().removeTask(this);
     }
 
     @Override

@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class ModularConsoleCommand implements BaseCommand {
+public final class ModularConsoleCommand implements BaseCommand {
 
     private static final ModularBotLogger LOGGER = ModularBotLogger.create(ModularConsoleCommand.class);
 
