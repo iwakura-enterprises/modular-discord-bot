@@ -5,8 +5,11 @@ import dev.mayuna.consoleparallax.CommandInvocationContext;
 import dev.mayuna.modularbot.ModularBot;
 import dev.mayuna.modularbot.base.Module;
 import dev.mayuna.modularbot.base.ModuleManager;
-import dev.mayuna.modularbot.util.logging.ModularBotLogger;
 import dev.mayuna.modularbot.objects.ModuleInfo;
+import dev.mayuna.modularbot.util.logging.ModularBotLogger;
+import net.dv8tion.jda.api.JDA;
+import net.dv8tion.jda.api.sharding.ShardManager;
+import org.apache.logging.log4j.Level;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -14,154 +17,6 @@ import java.util.List;
 public final class ModularConsoleCommand implements BaseCommand {
 
     private static final ModularBotLogger LOGGER = ModularBotLogger.create(ModularConsoleCommand.class);
-
-    /*
-    public ModularConsoleCommand() {
-        this.name = "modular";
-        this.syntax = "<modules(m)[unload(u) <module>|load(l) <module>|reload(r)]|shards(s)[verbose(v)]|restart(r)>";
-    }
-
-    @Override
-    public CommandResult execute(String arguments) {
-        ArgumentParser argumentParser = new ArgumentParser(arguments);
-
-        if (!argumentParser.hasAnyArguments()) {
-            return CommandResult.INCORRECT_SYNTAX;
-        }
-
-        switch (argumentParser.getArgumentAtIndex(0).getValue()) {
-            case "modules", "m" -> {
-                ModuleManagerImpl moduleManager = ModuleManagerImpl.getInstance();
-
-                if (argumentParser.hasArgumentAtIndex(1)) {
-                    switch (argumentParser.getArgumentAtIndex(1).getValue()) {
-                        case "unload", "u" -> {
-                            if (!argumentParser.hasArgumentAtIndex(2)) {
-                                return CommandResult.INCORRECT_SYNTAX;
-                            }
-
-                            return processModuleDisable(argumentParser);
-                        }
-                        case "load", "l" -> {
-                            if (!argumentParser.hasArgumentAtIndex(2)) {
-                                return CommandResult.INCORRECT_SYNTAX;
-                            }
-
-                            return processModuleEnable(argumentParser);
-                        }
-                        case "reload", "r" -> {
-                            return processModuleReload(argumentParser);
-                        }
-                    }
-                }
-
-                Logger.info("== Enabled modules - " + moduleManager.getModules().size() + " ==");
-                moduleManager.getModules().forEach(module -> {
-                    ModuleInfo moduleInfo = module.getModuleInfo();
-
-                    Logger.info("- " + moduleInfo.name() + " @ " + moduleInfo.version() + " (by " + moduleInfo.author() + ")");
-                });
-                Logger.info("Listing modules done.");
-            }
-            case "shards", "s" -> {
-                WrappedShardManager wrappedShardManager = ModularBot.getWrappedShardManager();
-                ShardManager shardManager = wrappedShardManager.getInstance();
-
-                Logger.info("=== Shards info ===");
-                Logger.info("Total shards: " + shardManager.getShardsTotal());
-
-                if (argumentParser.hasArgumentAtIndex(1)) {
-                    switch (argumentParser.getArgumentAtIndex(1).getValue()) {
-                        case "verbose", "v" -> {
-                            Logger.info("- [ID] -> Status (x guilds)");
-                            Logger.info("");
-                            wrappedShardManager.getInstance().getShardCache().forEach(jda -> {
-                                if (jda.getStatus() != JDA.Status.CONNECTED) {
-                                    Logger.warn("- [" + jda.getShardInfo().getShardId() + "] -> " + jda.getStatus() + " (" + jda.getGuildCache()
-                                                                                                                                .size() + " guilds)");
-                                } else {
-                                    Logger.info("- [" + jda.getShardInfo().getShardId() + "] -> " + jda.getStatus() + " (" + jda.getGuildCache()
-                                                                                                                                .size() + " guilds)");
-                                }
-                            });
-
-                            return CommandResult.SUCCESS;
-                        }
-                    }
-                }
-
-                List<JDA> nonConnectedShards = wrappedShardManager.getShardsWithoutStatus(JDA.Status.CONNECTED);
-
-                if (!nonConnectedShards.isEmpty()) {
-                    Logger.warn("Some shards are not connected!");
-                    nonConnectedShards.forEach(jda -> {
-                        Logger.warn("Shard " + jda.getShardInfo().getShardId() + " has status " + jda.getStatus());
-                    });
-                } else {
-                    Logger.success("All shards are connected.");
-                }
-            }
-            case "restart", "r" -> {
-                ModularBot.restartBot(false);
-            }
-            default -> {
-                return CommandResult.INCORRECT_SYNTAX;
-            }
-        }
-
-        return CommandResult.SUCCESS;
-    }
-
-    private CommandResult processModuleDisable(ArgumentParser argumentParser) {
-        String moduleName = argumentParser.getAllArgumentsAfterIndex(2).getValue();
-        Module module = ModularBot.getModuleManager().getModuleByName(moduleName).orElse(null);
-
-        if (module == null) {
-            Logger.error("Module " + moduleName + " is not loaded or could not be found.");
-            return CommandResult.SUCCESS;
-        }
-
-        ModularBot.getModuleManager().unloadModule(module);
-        return CommandResult.SUCCESS;
-    }
-
-    private CommandResult processModuleEnable(ArgumentParser argumentParser) {
-        String moduleName = argumentParser.getAllArgumentsAfterIndex(2).getValue();
-        Module module = ModularBot.getModuleManager().getModuleByName(moduleName).orElse(null);
-
-        if (module == null) {
-            Logger.error("Module " + moduleName + " is not loaded or could not be found.");
-            Logger.warn("Loading specific modules from jars is not currently supported. Use must use reload subcommand.");
-            return CommandResult.SUCCESS;
-        }
-
-        ModularBot.getModuleManager().loadModule(module);
-        ModularBot.getModuleManager().enableModule(module);
-        return CommandResult.SUCCESS;
-    }
-
-    private CommandResult processModuleReload(ArgumentParser argumentParser) {
-        if (!argumentParser.hasArgumentAtIndex(2)) {
-
-            Logger.info("Unloading all modules...");
-            ModularBot.getModuleManager().unloadModules();
-
-            try {
-                ModularBot.getModuleManager().loadModules();
-            } catch (Exception exception) {
-                Logger.throwing(exception);
-                Logger.error("There was an exception while loading modules!");
-            }
-
-            return CommandResult.SUCCESS;
-        }
-
-        processModuleDisable(argumentParser);
-        processModuleEnable(argumentParser);
-
-        Logger.warn("If you want to (re)load commands or events, you must restart the bot.");
-        return CommandResult.SUCCESS;
-    }*/
 
     @Override
     public @NotNull String getName() {
@@ -175,7 +30,7 @@ public final class ModularConsoleCommand implements BaseCommand {
 
     @Override
     public @NotNull String getSyntax() {
-        return "<modules(m)[unload(u) <module>|load(l) <module>|reload(r)]|shards(s)[verbose(v)]|restart(r)>";
+        return "<modules(m)|shards(s) [verbose(v)]>";
     }
 
     @Override
@@ -199,21 +54,19 @@ public final class ModularConsoleCommand implements BaseCommand {
                     return;
                 }
 
+                /*
                 if (args.length != 3) {
                     LOGGER.error("Invalid modules arguments. Syntax: {}", getSyntax());
                     return;
                 }
 
-                processModuleSubCommand(args[1], args[2]);
+                processModuleSubCommand(args[1], args[2]);*/
             }
             case "shards", "s" -> {
-                // TODO
+                boolean verbose = args.length == 2 && (args[1].equals("verbose") || args[1].equals("v"));
+                showShards(verbose);
             }
         }
-    }
-
-    private void processModuleSubCommand(String action, String moduleName) {
-        // TODO
     }
 
     /**
@@ -225,11 +78,49 @@ public final class ModularConsoleCommand implements BaseCommand {
 
         LOGGER.info("== Modules - {} ==", modules.size());
         modules.forEach(module -> {
-            ModuleInfo moduleInfo;
+            ModuleInfo moduleInfo = module.getModuleInfo();
 
-            // TODO:
+            LOGGER.info("- {} @ {} (by {}) [{}]", moduleInfo.getName(), moduleInfo.getVersion(), moduleInfo.getAuthor(), module.getModuleStatus());
         });
 
         LOGGER.info("Listing modules done.");
+    }
+
+    /**
+     * Show shards
+     *
+     * @param verbose Determines if the list of shards should be printed as well
+     */
+    private void showShards(boolean verbose) {
+        ShardManager shardManager = ModularBot.getModularBotShardManager().get();
+
+        LOGGER.info("== Shard Info ==");
+        LOGGER.info("Total shards: {}", shardManager.getShardsTotal());
+
+        if (!verbose) {
+            return;
+        }
+
+        LOGGER.info("Running shards: {}", shardManager.getShardsRunning());
+
+        LOGGER.info("");
+        LOGGER.info("! [ID] -> Status (x guilds, y users)");
+        LOGGER.info("");
+        shardManager.getShardCache().forEach(shard -> {
+            Level logLevel;
+
+            if (shard.getStatus() == JDA.Status.CONNECTED) {
+                logLevel = ModularBotLogger.SUCCESS;
+            } else {
+                logLevel = Level.WARN;
+            }
+
+            LOGGER.log(logLevel, "[{}] -> {} ({} guilds, {} users)",
+                       shard.getShardInfo().getShardId(),
+                       shard.getStatus(),
+                       shard.getGuildCache().size(),
+                       shard.getUserCache().size()
+            );
+        });
     }
 }

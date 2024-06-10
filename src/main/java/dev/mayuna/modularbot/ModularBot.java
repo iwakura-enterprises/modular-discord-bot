@@ -5,11 +5,12 @@ import dev.mayuna.mayusjdautils.MayusJDAUtilities;
 import dev.mayuna.mayuslibrary.exceptionreporting.UncaughtExceptionReporter;
 import dev.mayuna.modularbot.base.ModuleManager;
 import dev.mayuna.modularbot.config.ModularBotConfig;
+import dev.mayuna.modularbot.console.ModularBotOutputHandler;
 import dev.mayuna.modularbot.console.ModularConsoleCommand;
 import dev.mayuna.modularbot.console.StopConsoleCommand;
 import dev.mayuna.modularbot.managers.DefaultModuleManager;
-import dev.mayuna.modularbot.util.logging.ModularBotLogger;
 import dev.mayuna.modularbot.managers.ModularBotDataManager;
+import dev.mayuna.modularbot.util.logging.ModularBotLogger;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -113,7 +114,11 @@ public final class ModularBot {
      * Loads ConsoleParallax
      */
     private static void loadConsoleParallax() {
-        consoleParallax = ConsoleParallax.builder().setCommandExecutor(Executors.newCachedThreadPool()).build();
+        consoleParallax = ConsoleParallax.builder()
+                                         .setOutputHandler(new ModularBotOutputHandler())
+                                         .setCommandExecutor(Executors.newCachedThreadPool())
+                                         .build();
+
         consoleParallax.registerDefaultHelpCommand();
         consoleParallax.registerCommand(new ModularConsoleCommand());
         consoleParallax.registerCommand(new StopConsoleCommand());
