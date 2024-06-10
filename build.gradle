@@ -29,8 +29,9 @@ dependencies {
     // Personal libraries
     implementation 'dev.mayuna:mayus-jda-utilities:3.3.1'
     implementation 'dev.mayuna:mayus-library:3.1'
-    implementation 'dev.mayuna:mayus-json-utilities:2.0'
+    implementation 'dev.mayuna:mayus-json-utilities:2.1'
     implementation 'dev.mayuna:pumpk1n:2.2.1'
+    implementation 'dev.mayuna:console-parallax:1.0.1'
 
     // SLF4J
     implementation 'org.apache.logging.log4j:log4j-slf4j2-impl:2.23.1'
@@ -71,7 +72,7 @@ shadowJar {
     archiveFileName = "modular-discord-bot.jar"
 
     manifest {
-        attributes 'Main-Class': 'dev.mayuna.modularbot.ModularBot'
+        attributes 'Main-Class': 'dev.mayuna.modularbot.Main'
     }
 }
 

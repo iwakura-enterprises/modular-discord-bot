@@ -2,12 +2,45 @@ package dev.mayuna.modularbot.objects;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import lombok.Getter;
 
 import java.io.IOException;
 
-public record ModuleInfo(String name, String author, String version, String mainClass, String[] depend, String[] softDepend, String[] loadBefore,
-                         String[] exceptionHandlingPackages) {
+/**
+ * Module info
+ */
+@Getter
+public final class ModuleInfo {
 
+    private final String name;
+    private final String mainClass;
+    private final String author;
+    private final String version;
+    private final String[] depend;
+    private final String[] softDepend;
+    private final String[] loadBefore;
+    private final String[] exceptionHandlingPackages;
+
+    private ModuleInfo(String name, String mainClass, String author, String version, String[] depend, String[] softDepend, String[] loadBefore, String[] exceptionHandlingPackages) {
+        this.name = name;
+        this.mainClass = mainClass;
+        this.author = author;
+        this.version = version;
+        this.depend = depend;
+        this.softDepend = softDepend;
+        this.loadBefore = loadBefore;
+        this.exceptionHandlingPackages = exceptionHandlingPackages;
+    }
+
+    /**
+     * Loads {@link ModuleInfo} from {@link JsonObject}
+     *
+     * @param jsonObject Non-null {@link JsonObject}
+     *
+     * @return Non-null {@link ModuleInfo}
+     *
+     * @throws IOException If name or mainClass field is missing
+     */
     public static ModuleInfo loadFromJsonObject(JsonObject jsonObject) throws IOException {
         if (!jsonObject.has("name")) {
             throw new IOException("ModuleInfo is missing name field!");
@@ -27,7 +60,7 @@ public record ModuleInfo(String name, String author, String version, String main
         String[] loadBefore = jsonObject.has("loadBefore") ? jsonArrayToStringArray(jsonObject.getAsJsonArray("loadBefore")) : new String[0];
         String[] exceptionHandlingPackages = jsonObject.has("exceptionHandlingPackages") ? jsonArrayToStringArray(jsonObject.getAsJsonArray("exceptionHandlingPackages")) : new String[0];
 
-        return new ModuleInfo(name, author, version, mainClass, depend, softDepend, loadBefore, exceptionHandlingPackages);
+        return new ModuleInfo(name, mainClass, author, version, depend, softDepend, loadBefore, exceptionHandlingPackages);
     }
 
     private static String[] jsonArrayToStringArray(JsonArray jsonArray) {

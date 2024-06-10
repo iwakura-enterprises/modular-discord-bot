@@ -1,6 +1,7 @@
 package dev.mayuna.modularbot.concurrent;
 
-import dev.mayuna.modularbot.objects.Module;
+import dev.mayuna.modularbot.base.ModularTask;
+import dev.mayuna.modularbot.base.Module;
 import lombok.Getter;
 
 import java.util.UUID;

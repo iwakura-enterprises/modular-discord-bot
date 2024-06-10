@@ -1,4 +1,4 @@
-package dev.mayuna.modularbot.logging;
+package dev.mayuna.modularbot.util.logging;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -11,21 +11,24 @@ import org.apache.logging.log4j.spi.ExtendedLoggerWrapper;
 import org.apache.logging.log4j.util.MessageSupplier;
 import org.apache.logging.log4j.util.Supplier;
 
+import java.io.Serial;
+
 /**
  * Extended Logger interface with convenience methods for
  * the FLOW, SUCCESS and MDEBUG custom log levels.
  * <p>Compatible with Log4j 2.6 or higher.</p>
  */
-public final class MayuLogger extends ExtendedLoggerWrapper {
+@SuppressWarnings("unused")
+public final class ModularBotLogger extends ExtendedLoggerWrapper {
 
-    private static final long serialVersionUID = 12093312991200L;
-    private static final String FQCN = MayuLogger.class.getName();
-    private static final Level FLOW = Level.forName("FLOW", 480); // 550
-    private static final Level SUCCESS = Level.forName("SUCCESS", 420);
-    private static final Level MDEBUG = Level.forName("MDEBUG", 450);
+    private static final @Serial long serialVersionUID = 12093312991200L;
+    private static final String FQCN = ModularBotLogger.class.getName();
+    public static final Level FLOW = Level.forName("FLOW", 480); // 550
+    public static final Level SUCCESS = Level.forName("SUCCESS", 420);
+    public static final Level MDEBUG = Level.forName("MDEBUG", 450);
     private final ExtendedLoggerWrapper logger;
 
-    private MayuLogger(final Logger logger) {
+    private ModularBotLogger(final Logger logger) {
         super((AbstractLogger) logger, logger.getName(), logger.getMessageFactory());
         this.logger = this;
     }
@@ -35,9 +38,9 @@ public final class MayuLogger extends ExtendedLoggerWrapper {
      *
      * @return The custom Logger for the calling class.
      */
-    public static MayuLogger create() {
+    public static ModularBotLogger create() {
         final Logger wrapped = LogManager.getLogger();
-        return new MayuLogger(wrapped);
+        return new ModularBotLogger(wrapped);
     }
 
     /**
@@ -49,9 +52,9 @@ public final class MayuLogger extends ExtendedLoggerWrapper {
      *
      * @return The custom Logger.
      */
-    public static MayuLogger create(final Class<?> loggerName) {
+    public static ModularBotLogger create(final Class<?> loggerName) {
         final Logger wrapped = LogManager.getLogger(loggerName);
-        return new MayuLogger(wrapped);
+        return new ModularBotLogger(wrapped);
     }
 
     /**
@@ -66,9 +69,9 @@ public final class MayuLogger extends ExtendedLoggerWrapper {
      *
      * @return The custom Logger.
      */
-    public static MayuLogger create(final Class<?> loggerName, final MessageFactory messageFactory) {
+    public static ModularBotLogger create(final Class<?> loggerName, final MessageFactory messageFactory) {
         final Logger wrapped = LogManager.getLogger(loggerName, messageFactory);
-        return new MayuLogger(wrapped);
+        return new ModularBotLogger(wrapped);
     }
 
     /**
@@ -81,9 +84,9 @@ public final class MayuLogger extends ExtendedLoggerWrapper {
      *
      * @return The custom Logger.
      */
-    public static MayuLogger create(final Object value) {
+    public static ModularBotLogger create(final Object value) {
         final Logger wrapped = LogManager.getLogger(value);
-        return new MayuLogger(wrapped);
+        return new ModularBotLogger(wrapped);
     }
 
     /**
@@ -99,9 +102,9 @@ public final class MayuLogger extends ExtendedLoggerWrapper {
      *
      * @return The custom Logger.
      */
-    public static MayuLogger create(final Object value, final MessageFactory messageFactory) {
+    public static ModularBotLogger create(final Object value, final MessageFactory messageFactory) {
         final Logger wrapped = LogManager.getLogger(value, messageFactory);
-        return new MayuLogger(wrapped);
+        return new ModularBotLogger(wrapped);
     }
 
     /**
@@ -112,9 +115,9 @@ public final class MayuLogger extends ExtendedLoggerWrapper {
      *
      * @return The custom Logger.
      */
-    public static MayuLogger create(final String name) {
+    public static ModularBotLogger create(final String name) {
         final Logger wrapped = LogManager.getLogger(name);
-        return new MayuLogger(wrapped);
+        return new ModularBotLogger(wrapped);
     }
 
     /**
@@ -128,9 +131,9 @@ public final class MayuLogger extends ExtendedLoggerWrapper {
      *
      * @return The custom Logger.
      */
-    public static MayuLogger create(final String name, final MessageFactory messageFactory) {
+    public static ModularBotLogger create(final String name, final MessageFactory messageFactory) {
         final Logger wrapped = LogManager.getLogger(name, messageFactory);
-        return new MayuLogger(wrapped);
+        return new ModularBotLogger(wrapped);
     }
 
     /**
