@@ -1,26 +1,42 @@
 package dev.mayuna.modularbot.concurrent;
 
-import dev.mayuna.modularbot.base.ModularTask;
 import dev.mayuna.modularbot.base.Module;
+import dev.mayuna.modularbot.base.ModuleTask;
 import lombok.Getter;
+import lombok.NonNull;
 
 import java.util.Timer;
 import java.util.UUID;
 
-public class ModularTimer implements ModularTask {
+/**
+ * Holds task which is run on a {@link Timer}
+ */
+public class ModuleTaskTimer implements ModuleTask {
 
     private final UUID uuid = UUID.randomUUID();
     private final Module owner;
-    private final @Getter Timer instance = new Timer("ModularScheduler-Timer-" + uuid);
+    private final @Getter Timer instance = new Timer(ModuleScheduler.THREAD_NAME_FORMAT.formatted(uuid));
     private boolean running;
     private boolean cancelled;
 
-    private ModularTimer(Module owner) {
+    /**
+     * Creates new {@link ModuleTaskTimer}
+     *
+     * @param owner Non-null {@link Module}
+     */
+    private ModuleTaskTimer(@NonNull Module owner) {
         this.owner = owner;
     }
 
-    public static ModularTimer create(Module owner) {
-        return new ModularTimer(owner);
+    /**
+     * Creates new {@link ModuleTaskTimer}
+     *
+     * @param owner Non-null {@link Module}
+     *
+     * @return {@link ModuleTaskTimer}
+     */
+    static ModuleTaskTimer create(Module owner) {
+        return new ModuleTaskTimer(owner);
     }
 
     @Override
@@ -31,11 +47,6 @@ public class ModularTimer implements ModularTask {
     @Override
     public Module getOwner() {
         return owner;
-    }
-
-    @Override
-    public boolean isSync() {
-        return false;
     }
 
     @Override

@@ -8,7 +8,7 @@ import dev.mayuna.modularbot.ModularBotConstants;
 import dev.mayuna.modularbot.base.Module;
 import dev.mayuna.modularbot.base.ModuleManager;
 import dev.mayuna.modularbot.classloaders.ModuleClassLoader;
-import dev.mayuna.modularbot.concurrent.ModularScheduler;
+import dev.mayuna.modularbot.concurrent.ModuleScheduler;
 import dev.mayuna.modularbot.objects.ModuleConfig;
 import dev.mayuna.modularbot.objects.ModuleInfo;
 import dev.mayuna.modularbot.objects.ModuleStatus;
@@ -151,7 +151,7 @@ public final class DefaultModuleManager implements ModuleManager {
             module.setModuleInfo(moduleInfo);
             module.setModuleStatus(ModuleStatus.NOT_LOADED);
             module.setModuleConfig(new ModuleConfig(module, defaultConfig));
-            module.setScheduler(new ModularScheduler(module));
+            module.setScheduler(new ModuleScheduler(module));
             module.setLogger(ModularBotLogger.create(module.getModuleInfo().getName()));
 
             var mayusJdaUtilities = new MayusJDAUtilities();

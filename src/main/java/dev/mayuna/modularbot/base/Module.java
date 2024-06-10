@@ -3,7 +3,7 @@ package dev.mayuna.modularbot.base;
 import com.jagrosh.jdautilities.command.CommandClientBuilder;
 import dev.mayuna.consoleparallax.ConsoleParallax;
 import dev.mayuna.mayusjdautils.MayusJDAUtilities;
-import dev.mayuna.modularbot.concurrent.ModularScheduler;
+import dev.mayuna.modularbot.concurrent.ModuleScheduler;
 import dev.mayuna.modularbot.util.logging.ModularBotLogger;
 import dev.mayuna.modularbot.objects.ModuleConfig;
 import dev.mayuna.modularbot.objects.ModuleInfo;
@@ -13,8 +13,6 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
 import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder;
-
-import java.util.jar.JarFile;
 
 @Getter
 @Setter
@@ -27,7 +25,7 @@ public abstract class Module {
     private ModuleConfig moduleConfig;
     private ModularBotLogger logger;
     private MayusJDAUtilities mayusJDAUtilities;
-    private ModularScheduler scheduler;
+    private ModuleScheduler scheduler;
 
     /**
      * This method is called when the module is loaded
