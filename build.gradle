@@ -17,6 +17,10 @@ repositories {
 
     maven { url "https://m2.chew.pro/snapshots" }
     maven { url "https://s01.oss.sonatype.org/content/repositories/releases" }
+
+    flatDir {
+        dirs 'libs'
+    }
 }
 
 dependencies {
@@ -27,7 +31,8 @@ dependencies {
     implementation 'pw.chew:jda-chewtils:2.0-SNAPSHOT'
 
     // Personal libraries
-    implementation 'dev.mayuna:mayus-jda-utilities:3.3.1'
+    implementation 'dev.mayuna:mayus-jda-utilities:3.4'
+
     implementation 'dev.mayuna:mayus-library:3.1'
     implementation 'dev.mayuna:mayus-json-utilities:2.1'
     implementation 'dev.mayuna:pumpk1n:2.2.1'
