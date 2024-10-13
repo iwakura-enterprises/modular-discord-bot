@@ -15,7 +15,7 @@ public final class ModuleClassLoader extends URLClassLoader {
         ClassLoader.registerAsParallelCapable();
     }
 
-    private final List<ModuleClassLoader> otherClassLoaders;
+    private final List<ClassLoader> otherClassLoaders;
 
     /**
      * Creates new class loader for specified jar file with specified {@link ClassLoader} as parent
@@ -26,7 +26,7 @@ public final class ModuleClassLoader extends URLClassLoader {
      *
      * @throws MalformedURLException If the jar file could not be converted to URL
      */
-    public ModuleClassLoader(Path jarFile, ClassLoader parent, List<ModuleClassLoader> otherClassLoaders) throws MalformedURLException {
+    public ModuleClassLoader(Path jarFile, ClassLoader parent, List<ClassLoader> otherClassLoaders) throws MalformedURLException {
         super(new URL[] {jarFile.toUri().toURL()}, parent);
         this.otherClassLoaders = otherClassLoaders;
     }
@@ -45,14 +45,14 @@ public final class ModuleClassLoader extends URLClassLoader {
 
         // Load other module's class
         synchronized (otherClassLoaders) {
-            for (ModuleClassLoader otherClassLoader : otherClassLoaders) {
+            for (ClassLoader otherClassLoader : otherClassLoaders) {
                 // Skip own class loader to prevent stack overflows
                 if (otherClassLoader == this) {
                     continue;
                 }
 
                 try {
-                    return otherClassLoader.loadClass(name, resolve);
+                    return otherClassLoader.loadClass(name);
                 } catch (ClassNotFoundException ignored) {
                 }
             }

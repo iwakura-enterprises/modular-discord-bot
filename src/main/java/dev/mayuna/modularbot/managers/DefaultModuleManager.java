@@ -30,7 +30,7 @@ public final class DefaultModuleManager implements ModuleManager {
 
     private final static ModularBotLogger LOGGER = ModularBotLogger.create("ModuleManager");
 
-    private final List<ModuleClassLoader> moduleClassLoaders = Collections.synchronizedList(new LinkedList<>());
+    private final List<ClassLoader> moduleClassLoaders = Collections.synchronizedList(new LinkedList<>());
     private List<Module> modules = createModuleList();
     private List<Module> internalModules = createModuleList();
 
@@ -59,27 +59,46 @@ public final class DefaultModuleManager implements ModuleManager {
      */
     @Override
     public List<Module> getModules() {
-        return Stream.concat(modules.stream(), internalModules.stream()).toList();
+        return modules;
     }
 
     /**
      * Adds internal module(s) to memory. If not loaded, they will be loaded and enabled.
      *
-     * @param modules Module(s) to add
+     * @param internalModules Module(s) to add
      */
     @Override
-    public void addInternalModules(@NonNull Module... modules) {
+    public void addInternalModules(@NonNull Module... internalModules) {
         if (stateUnloaded) {
             throw new IllegalStateException("Cannot add internal modules after unloading!");
         }
 
-        var listModules = List.of(modules);
-        listModules.forEach(module -> module.setModuleStatus(ModuleStatus.NOT_LOADED));
+        // Prepare modules
+        var listModules = List.of(internalModules);
+        listModules.forEach(module -> {
+            module.setModuleStatus(ModuleStatus.NOT_LOADED);
+            module.setModuleConfig(new ModuleConfig(module, new JsonObject()));
+            module.setModuleScheduler(new ModuleScheduler(module));
+            module.setLogger(ModularBotLogger.create(module.getModuleInfo().getName()));
+
+            var mayusJdaUtilities = new MayusJDAUtilities();
+            mayusJdaUtilities.copyFrom(ModularBot.getBaseMayusJDAUtilities());
+            module.setMayusJDAUtilities(mayusJdaUtilities);
+
+            // Add the module's class loader to the list of class loaders
+            synchronized (moduleClassLoaders) {
+                var moduleClassLoader = module.getClass().getClassLoader();
+
+                if (!moduleClassLoaders.contains(moduleClassLoader)) {
+                    moduleClassLoaders.add(moduleClassLoader);
+                }
+            }
+        });
 
         // Loading did not start yet
         if (!stateLoaded) {
             LOGGER.info("Adding {} internal module(s) to memory to be loaded", listModules.size());
-            internalModules.addAll(listModules);
+            this.internalModules.addAll(listModules);
             return;
         }
 
@@ -87,7 +106,6 @@ public final class DefaultModuleManager implements ModuleManager {
         if (!stateEnabled) {
             LOGGER.info("Loading {} internal module(s) & adding them to memory to be enabled", listModules.size());
             listModules.forEach(this::loadModule);
-            internalModules.addAll(listModules);
             return;
         }
 
@@ -95,7 +113,6 @@ public final class DefaultModuleManager implements ModuleManager {
         LOGGER.info("Loading & enabling {} internal module(s) & adding them to memory", listModules.size());
         listModules.forEach(this::loadModule);
         listModules.forEach(this::enableModule);
-        internalModules.addAll(listModules);
     }
 
     @Override
@@ -151,6 +168,7 @@ public final class DefaultModuleManager implements ModuleManager {
         // Loading any internal modules
         LOGGER.mdebug("Loading {} internal modules...", internalModules.size());
         internalModules.forEach(this::loadModule);
+        internalModules.clear();
 
         stateLoaded = true;
         return true;
