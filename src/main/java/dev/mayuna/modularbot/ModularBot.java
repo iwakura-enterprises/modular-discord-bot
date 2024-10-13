@@ -15,6 +15,7 @@ import dev.mayuna.modularbot.util.logging.ModularBotLogger;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.Setter;
 
 import java.util.concurrent.Executors;
@@ -32,6 +33,7 @@ public final class ModularBot {
     private static @Getter ModularBotDataManager modularBotDataManager;
     private static @Getter ModularBotShardManager modularBotShardManager;
 
+    private static @Getter @Setter boolean shouldHaltJVM = true;
     private static @Getter @Setter boolean running;
     private static @Getter @Setter boolean stopping;
 
@@ -170,6 +172,11 @@ public final class ModularBot {
      */
     private static void prepareModuleManager() {
         moduleManager = new DefaultModuleManager();
+
+        if (!internalModules.isEmpty()) {
+            LOGGER.info("Adding {} internal modules...", internalModules.size());
+            moduleManager.addInternalModules(internalModules.toArray(new Module[0]));
+        }
     }
 
     /**
@@ -178,11 +185,6 @@ public final class ModularBot {
     private static void loadModules() {
         if (!moduleManager.loadModules()) {
             shutdown();
-        }
-
-        if (!internalModules.isEmpty()) {
-            LOGGER.info("Loading {} internal modules...", internalModules.size());
-            internalModules.forEach(moduleManager::loadModule);
         }
     }
 
@@ -204,11 +206,6 @@ public final class ModularBot {
      */
     private static void enableModules() {
         moduleManager.enableModules();
-
-        if (!internalModules.isEmpty()) {
-            LOGGER.info("Enabling {} internal modules...", internalModules.size());
-            internalModules.forEach(moduleManager::enableModule);
-        }
     }
 
     /**
@@ -270,6 +267,8 @@ public final class ModularBot {
 
         LOGGER.info("Shutting down ModularDiscordBot @ {}", ModularBotConstants.getVersion());
 
+        internalModules.clear();
+
         LOGGER.info("Shutting down ConsoleParallax...");
         consoleParallax.interrupt();
 
@@ -282,22 +281,25 @@ public final class ModularBot {
         }
 
         LOGGER.success("Shutdown completed");
-        Runtime.getRuntime().halt(0);
+
+        if (shouldHaltJVM) {
+            LOGGER.info("Halting JVM...");
+            Runtime.getRuntime().halt(0);
+        }
     }
 
     /**
      * Adds internal module. Added modules will be loaded upon starting the ModularBot. If it's already started, it will be loaded immediately.
-     * @param module Module to add
+     * @param modules Modules to add
      */
-    public static void addInternalModule(Module module) {
+    public static void addInternalModules(@NonNull Module... modules) {
         if (running) {
-            LOGGER.info("Loading & enabling internal module: {}", module.getModuleInfo().getName());
-            moduleManager.loadModule(module);
-            moduleManager.enableModule(module);
+            moduleManager.addInternalModules(modules);
             return;
         }
 
-        LOGGER.info("Adding internal module: {}", module.getModuleInfo().getName());
-        internalModules.add(module);
+        var listModules = List.of(modules);
+        LOGGER.info("Adding {} internal modules", listModules.size());
+        internalModules.addAll(listModules);
     }
 }

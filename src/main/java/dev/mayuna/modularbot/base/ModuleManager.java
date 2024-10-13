@@ -28,6 +28,13 @@ public interface ModuleManager {
     List<Module> getModules();
 
     /**
+     * Adds internal module(s) to memory. If not loaded, they will be loaded & enabled.
+     *
+     * @param modules Module(s) to add
+     */
+    void addInternalModules(Module... modules);
+
+    /**
      * Determines if specified module is loaded in memory
      *
      * @param moduleName Module name
@@ -51,7 +58,8 @@ public interface ModuleManager {
 
     /**
      * Loads modules from file system to memory. This method must not call {@link Module#onLoad()}<br> If called again, firstly all loaded modules are
-     * disabled (if needed) and unloaded, then it proceeds normally.
+     * disabled (if needed) and
+     * unloaded, then it proceeds normally.
      *
      * @return Returns if the loading was successful
      */

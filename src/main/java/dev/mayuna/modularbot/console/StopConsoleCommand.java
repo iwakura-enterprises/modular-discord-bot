@@ -3,6 +3,8 @@ package dev.mayuna.modularbot.console;
 import dev.mayuna.consoleparallax.BaseCommand;
 import dev.mayuna.consoleparallax.CommandInvocationContext;
 import dev.mayuna.modularbot.ModularBot;
+import lombok.Getter;
+import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
 
 public final class StopConsoleCommand implements BaseCommand {

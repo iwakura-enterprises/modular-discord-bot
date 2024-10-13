@@ -14,6 +14,7 @@ import dev.mayuna.modularbot.objects.ModuleInfo;
 import dev.mayuna.modularbot.objects.ModuleStatus;
 import dev.mayuna.modularbot.util.InputStreamUtils;
 import dev.mayuna.modularbot.util.logging.ModularBotLogger;
+import lombok.NonNull;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -31,6 +32,11 @@ public final class DefaultModuleManager implements ModuleManager {
 
     private final List<ModuleClassLoader> moduleClassLoaders = Collections.synchronizedList(new LinkedList<>());
     private List<Module> modules = createModuleList();
+    private List<Module> internalModules = createModuleList();
+
+    private boolean stateLoaded = false;
+    private boolean stateEnabled = false;
+    private boolean stateUnloaded = false;
 
     /**
      * Creates empty list for modules
@@ -46,9 +52,49 @@ public final class DefaultModuleManager implements ModuleManager {
         return LOGGER;
     }
 
+    /**
+     * Returns list of loaded modules in memory.
+     *
+     * @return List of modules
+     */
     @Override
     public List<Module> getModules() {
-        return modules;
+        return Stream.concat(modules.stream(), internalModules.stream()).toList();
+    }
+
+    /**
+     * Adds internal module(s) to memory. If not loaded, they will be loaded & enabled.
+     *
+     * @param modules Module(s) to add
+     */
+    @Override
+    public void addInternalModules(@NonNull Module... modules) {
+        if (stateUnloaded) {
+            throw new IllegalStateException("Cannot add internal modules after unloading!");
+        }
+
+        var listModules = List.of(modules);
+
+        // Loading did not start yet
+        if (!stateLoaded) {
+            LOGGER.info("Adding {} internal module(s) to memory to be loaded", listModules.size());
+            internalModules.addAll(listModules);
+            return;
+        }
+
+        // Loading started, but not enabled -> load them
+        if (!stateEnabled) {
+            LOGGER.info("Loading {} internal module(s) & adding them to memory to be enabled", listModules.size());
+            listModules.forEach(this::loadModule);
+            internalModules.addAll(listModules);
+            return;
+        }
+
+        // Loading & enabling started -> enable them
+        LOGGER.info("Loading & enabling {} internal module(s) & adding them to memory", listModules.size());
+        listModules.forEach(this::loadModule);
+        listModules.forEach(this::enableModule);
+        internalModules.addAll(listModules);
     }
 
     @Override
@@ -101,6 +147,11 @@ public final class DefaultModuleManager implements ModuleManager {
             loadModule(module);
         }
 
+        // Loading any internal modules
+        LOGGER.mdebug("Loading {} internal modules...", internalModules.size());
+        internalModules.forEach(this::loadModule);
+
+        stateLoaded = true;
         return true;
     }
 
@@ -231,7 +282,8 @@ public final class DefaultModuleManager implements ModuleManager {
             }
         });
 
-        LOGGER.info("Enabled");
+        stateEnabled = true;
+        LOGGER.info("Enabled {} modules successfully.", modules.size());
     }
 
     @Override
@@ -290,9 +342,11 @@ public final class DefaultModuleManager implements ModuleManager {
         // Copy modules to temporary field
         List<Module> oldModules = modules;
         modules = createModuleList();
+        internalModules = createModuleList();
 
         oldModules.forEach(this::unloadModule);
 
+        stateUnloaded = true;
         LOGGER.success("Unloaded {} modules successfully.", oldModules.size());
     }
 

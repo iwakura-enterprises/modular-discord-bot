@@ -4,9 +4,9 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NonNull;
 
 import java.io.IOException;
-import lombok.NonNull;
 
 /**
  * Module info
@@ -24,7 +24,7 @@ public final class ModuleInfo {
     private final String[] loadBefore;
     private final String[] exceptionHandlingPackages;
 
-    private ModuleInfo(@NonNull String name, String mainClass, @NonNull String author, @NonNull String version, String[] depend, String[] softDepend, String[] loadBefore, String[] exceptionHandlingPackages) {
+    private ModuleInfo(@NonNull String name, String mainClass, @NonNull String author, @NonNull String version, @NonNull String[] depend, @NonNull String[] softDepend, @NonNull String[] loadBefore, @NonNull String[] exceptionHandlingPackages) {
         this.name = name;
         this.mainClass = mainClass;
         this.author = author;
@@ -33,6 +33,52 @@ public final class ModuleInfo {
         this.softDepend = softDepend;
         this.loadBefore = loadBefore;
         this.exceptionHandlingPackages = exceptionHandlingPackages;
+    }
+
+    /**
+     * Creates {@link ModuleInfo} for internal use
+     *
+     * @param name    Module name
+     * @param author  Module author
+     * @param version Module version
+     *
+     * @return {@link ModuleInfo}
+     */
+    public static ModuleInfo createInternalModuleInfo(String name, String author, String version) {
+        return ModuleInfo.builder()
+                         .name(name)
+                         .author(author)
+                         .version(version)
+                         .depend(new String[0])
+                         .softDepend(new String[0])
+                         .loadBefore(new String[0])
+                         .exceptionHandlingPackages(new String[0])
+                         .build();
+    }
+
+    /**
+     * Creates {@link ModuleInfo} for internal use
+     *
+     * @param name                      Module name
+     * @param author                    Module author
+     * @param version                   Module version
+     * @param depend                    Module dependencies
+     * @param softDepend                Module soft dependencies
+     * @param loadBefore                Module load before
+     * @param exceptionHandlingPackages Module exception handling packages
+     *
+     * @return {@link ModuleInfo}
+     */
+    public static ModuleInfo createInternalModuleInfo(@NonNull String name, @NonNull String author, @NonNull String version, @NonNull String[] depend, @NonNull String[] softDepend, @NonNull String[] loadBefore, @NonNull String[] exceptionHandlingPackages) {
+        return ModuleInfo.builder()
+                         .name(name)
+                         .author(author)
+                         .version(version)
+                         .depend(depend)
+                         .softDepend(softDepend)
+                         .loadBefore(loadBefore)
+                         .exceptionHandlingPackages(exceptionHandlingPackages)
+                         .build();
     }
 
     /**
@@ -54,8 +100,8 @@ public final class ModuleInfo {
         }
 
         String name = jsonObject.get("name").getAsString();
-        String author = jsonObject.has("author") ? jsonObject.get("author").getAsString() : null;
-        String version = jsonObject.has("version") ? jsonObject.get("version").getAsString() : null;
+        String author = jsonObject.has("author") ? jsonObject.get("author").getAsString() : "Unknown author";
+        String version = jsonObject.has("version") ? jsonObject.get("version").getAsString() : "Unknown version";
         String mainClass = jsonObject.get("mainClass").getAsString();
 
         String[] depend = jsonObject.has("depend") ? jsonArrayToStringArray(jsonObject.getAsJsonArray("depend")) : new String[0];
