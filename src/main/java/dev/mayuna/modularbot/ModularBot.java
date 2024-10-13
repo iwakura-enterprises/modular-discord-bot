@@ -44,14 +44,19 @@ public final class ModularBot {
         LOGGER.info("Starting ModularDiscordBot @ {}", ModularBotConstants.getVersion());
         LOGGER.info("Made by Mayuna");
 
-        // TODO: Print java info
+        LOGGER.mdebug("Java Runtime Information:");
+        LOGGER.mdebug("Java Version: {}", System.getProperty("java.version"));
+        LOGGER.mdebug("Java Vendor: {}", System.getProperty("java.vendor"));
+        LOGGER.mdebug("Java VM Name: {}", System.getProperty("java.vm.name"));
+        LOGGER.mdebug("Java VM Version: {}", System.getProperty("java.vm.version"));
+        LOGGER.mdebug("Java VM Vendor: {}", System.getProperty("java.vm.vendor"));
 
         LOGGER.info("""
                             \s
                             \033[0;35m  __  __         _      _            ___  _                   _   ___      _  \s
                             \033[0;35m |  \\/  |___  __| |_  _| |__ _ _ _  |   \\(_)___ __ ___ _ _ __| | | _ ) ___| |_\s
                             \033[0;35m | |\\/| / _ \\/ _` | || | / _` | '_| | |) | (_-</ _/ _ \\ '_/ _` | | _ \\/ _ \\  _|
-                            \033[0;35m |_|  |_\\___/\\__,_|\\_,_|_\\__,_|_|   |___/|_/__/\\__\\___/_| \\__,_| |___/\\___/\\__|
+                            \033[0;35m |_|  |_\\___/\\__,_|\\_,_|_\\__,_|_|   |___/|_/__/\\__\\___/_| \\__,_| |___/\\___/\\__|\033[0m
                             """);
 
         LOGGER.info("Loading...");
