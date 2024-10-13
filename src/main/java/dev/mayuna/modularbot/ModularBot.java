@@ -38,7 +38,7 @@ public final class ModularBot {
     private ModularBot() {
     }
 
-    static void start(String[] args) {
+    public static void start(String[] args) {
         LOGGER.info("Starting ModularDiscordBot @ {}", ModularBotConstants.getVersion());
         LOGGER.info("Made by Mayuna");
 
