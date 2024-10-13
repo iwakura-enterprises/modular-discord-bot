@@ -2,14 +2,17 @@ package dev.mayuna.modularbot.objects;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import lombok.Builder;
 import lombok.Getter;
 
 import java.io.IOException;
+import lombok.NonNull;
 
 /**
  * Module info
  */
 @Getter
+@Builder
 public final class ModuleInfo {
 
     private final String name;
@@ -21,7 +24,7 @@ public final class ModuleInfo {
     private final String[] loadBefore;
     private final String[] exceptionHandlingPackages;
 
-    private ModuleInfo(String name, String mainClass, String author, String version, String[] depend, String[] softDepend, String[] loadBefore, String[] exceptionHandlingPackages) {
+    private ModuleInfo(@NonNull String name, String mainClass, @NonNull String author, @NonNull String version, String[] depend, String[] softDepend, String[] loadBefore, String[] exceptionHandlingPackages) {
         this.name = name;
         this.mainClass = mainClass;
         this.author = author;
