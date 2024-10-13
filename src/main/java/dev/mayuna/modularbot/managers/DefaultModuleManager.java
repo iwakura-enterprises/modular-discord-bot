@@ -74,6 +74,7 @@ public final class DefaultModuleManager implements ModuleManager {
         }
 
         var listModules = List.of(modules);
+        listModules.forEach(module -> module.setModuleStatus(ModuleStatus.NOT_LOADED));
 
         // Loading did not start yet
         if (!stateLoaded) {
