@@ -63,7 +63,7 @@ public final class DefaultModuleManager implements ModuleManager {
     }
 
     /**
-     * Adds internal module(s) to memory. If not loaded, they will be loaded & enabled.
+     * Adds internal module(s) to memory. If not loaded, they will be loaded and enabled.
      *
      * @param modules Module(s) to add
      */

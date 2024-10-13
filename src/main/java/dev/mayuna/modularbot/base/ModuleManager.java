@@ -28,7 +28,7 @@ public interface ModuleManager {
     List<Module> getModules();
 
     /**
-     * Adds internal module(s) to memory. If not loaded, they will be loaded & enabled.
+     * Adds internal module(s) to memory. If not loaded, they will be loaded and enabled.
      *
      * @param modules Module(s) to add
      */
