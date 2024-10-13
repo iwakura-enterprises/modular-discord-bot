@@ -15,7 +15,7 @@ public final class ModularBotConstants {
     public static final String FILE_NAME_MODULE_INFO = "module_info.json";
     public static final String FILE_NAME_MODULE_CONFIG = "config.json";
 
-    private static final String VERSION = "2.1.6";
+    private static final String VERSION = "2.2.0";
 
     private ModularBotConstants() {
     }
