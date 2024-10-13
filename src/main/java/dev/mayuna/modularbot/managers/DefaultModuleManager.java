@@ -267,7 +267,7 @@ public final class DefaultModuleManager implements ModuleManager {
 
             // Remove the module's class loader from the list of class loaders
             synchronized (moduleClassLoaders) {
-                moduleClassLoaders.remove((ModuleClassLoader) module.getClass().getClassLoader());
+                moduleClassLoaders.remove(module.getClass().getClassLoader());
             }
             return;
         }
@@ -388,7 +388,7 @@ public final class DefaultModuleManager implements ModuleManager {
                 modules.remove(module);
 
                 synchronized (moduleClassLoaders) {
-                    moduleClassLoaders.remove((ModuleClassLoader) module.getClass().getClassLoader());
+                    moduleClassLoaders.remove(module.getClass().getClassLoader());
                 }
 
                 module.setModuleStatus(ModuleStatus.NOT_LOADED);
