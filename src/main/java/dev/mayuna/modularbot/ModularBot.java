@@ -3,6 +3,7 @@ package dev.mayuna.modularbot;
 import dev.mayuna.consoleparallax.ConsoleParallax;
 import dev.mayuna.mayusjdautils.MayusJDAUtilities;
 import dev.mayuna.mayuslibrary.exceptionreporting.UncaughtExceptionReporter;
+import dev.mayuna.modularbot.base.Module;
 import dev.mayuna.modularbot.base.ModuleManager;
 import dev.mayuna.modularbot.config.ModularBotConfig;
 import dev.mayuna.modularbot.console.ModularBotOutputHandler;
@@ -11,6 +12,8 @@ import dev.mayuna.modularbot.console.StopConsoleCommand;
 import dev.mayuna.modularbot.managers.DefaultModuleManager;
 import dev.mayuna.modularbot.managers.ModularBotDataManager;
 import dev.mayuna.modularbot.util.logging.ModularBotLogger;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -20,6 +23,8 @@ public final class ModularBot {
 
     private static final ModularBotLogger LOGGER = ModularBotLogger.create(ModularBot.class);
 
+    private static final List<Module> internalModules = new ArrayList<>();
+
     private static @Getter ModularBotConfig config;
     private static @Getter ConsoleParallax consoleParallax;
     private static @Getter MayusJDAUtilities baseMayusJDAUtilities;
@@ -27,6 +32,7 @@ public final class ModularBot {
     private static @Getter ModularBotDataManager modularBotDataManager;
     private static @Getter ModularBotShardManager modularBotShardManager;
 
+    private static @Getter @Setter boolean running;
     private static @Getter @Setter boolean stopping;
 
     private ModularBot() {
@@ -93,6 +99,7 @@ public final class ModularBot {
         connectToDiscord();
 
         LOGGER.success("Successfully started ModularDiscordBot (took {}ms)", (System.currentTimeMillis() - startMillis));
+        running = true;
 
         LOGGER.info("Initializing Presence Activity Cycle...");
         initializePresenceActivityCycle();
@@ -172,6 +179,11 @@ public final class ModularBot {
         if (!moduleManager.loadModules()) {
             shutdown();
         }
+
+        if (!internalModules.isEmpty()) {
+            LOGGER.info("Loading {} internal modules...", internalModules.size());
+            internalModules.forEach(moduleManager::loadModule);
+        }
     }
 
     /**
@@ -192,6 +204,11 @@ public final class ModularBot {
      */
     private static void enableModules() {
         moduleManager.enableModules();
+
+        if (!internalModules.isEmpty()) {
+            LOGGER.info("Enabling {} internal modules...", internalModules.size());
+            internalModules.forEach(moduleManager::enableModule);
+        }
     }
 
     /**
@@ -266,5 +283,21 @@ public final class ModularBot {
 
         LOGGER.success("Shutdown completed");
         Runtime.getRuntime().halt(0);
+    }
+
+    /**
+     * Adds internal module. Added modules will be loaded upon starting the ModularBot. If it's already started, it will be loaded immediately.
+     * @param module Module to add
+     */
+    public static void addInternalModule(Module module) {
+        if (running) {
+            LOGGER.info("Loading & enabling internal module: {}", module.getModuleInfo().getName());
+            moduleManager.loadModule(module);
+            moduleManager.enableModule(module);
+            return;
+        }
+
+        LOGGER.info("Adding internal module: {}", module.getModuleInfo().getName());
+        internalModules.add(module);
     }
 }
