@@ -25,13 +25,13 @@ repositories {
 
 dependencies {
     // JDA
-    implementation 'net.dv8tion:JDA:5.1.2'
+    implementation 'net.dv8tion:JDA:5.3.2'
 
     // JDA Chewutils
     implementation 'pw.chew:jda-chewtils:2.0-SNAPSHOT'
 
     // Personal libraries
-    implementation 'dev.mayuna:mayus-jda-utilities:3.4.2'
+    implementation 'dev.mayuna:mayus-jda-utilities:3.5.0'
 
     implementation 'dev.mayuna:mayus-library:3.1'
     implementation 'dev.mayuna:mayus-json-utilities:2.1'
