@@ -7,6 +7,7 @@ import dev.mayuna.modularbot.base.Module;
 import dev.mayuna.modularbot.base.ModuleManager;
 import dev.mayuna.modularbot.objects.ModuleInfo;
 import dev.mayuna.modularbot.util.logging.ModularBotLogger;
+import lombok.RequiredArgsConstructor;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.sharding.ShardManager;
 import org.apache.logging.log4j.Level;
@@ -14,9 +15,12 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+@RequiredArgsConstructor
 public final class ModularConsoleCommand implements BaseCommand {
 
     private static final ModularBotLogger LOGGER = ModularBotLogger.create(ModularConsoleCommand.class);
+
+    private final ModularBot modularBot;
 
     @Override
     public @NotNull String getName() {
@@ -73,7 +77,7 @@ public final class ModularConsoleCommand implements BaseCommand {
      * Shows all modules
      */
     private void showAllModules() {
-        ModuleManager moduleManager = ModularBot.getModuleManager();
+        ModuleManager moduleManager = modularBot.getModuleManager();
         List<Module> modules = moduleManager.getModules();
 
         LOGGER.info("== Modules - {} ==", modules.size());
@@ -92,7 +96,7 @@ public final class ModularConsoleCommand implements BaseCommand {
      * @param verbose Determines if the list of shards should be printed as well
      */
     private void showShards(boolean verbose) {
-        ShardManager shardManager = ModularBot.getModularBotShardManager().get();
+        ShardManager shardManager = modularBot.getModularBotShardManager().get();
 
         LOGGER.info("== Shard Info ==");
         LOGGER.info("Total shards: {}", shardManager.getShardsTotal());

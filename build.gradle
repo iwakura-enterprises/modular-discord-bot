@@ -37,6 +37,7 @@ dependencies {
     implementation 'dev.mayuna:mayus-json-utilities:2.1'
     implementation 'dev.mayuna:pumpk1n:2.2.1'
     implementation 'dev.mayuna:console-parallax:1.0.1'
+    implementation 'enterprises.iwakura:sigewine:1.1.1'
 
     // SLF4J
     implementation 'org.apache.logging.log4j:log4j-slf4j2-impl:2.23.1'
@@ -84,6 +85,12 @@ shadowJar {
 test {
     useJUnitPlatform()
     finalizedBy jacocoTestReport
+}
+
+jacocoTestReport {
+    reports {
+        csv.required.set(true)
+    }
 }
 
 // UTF-8

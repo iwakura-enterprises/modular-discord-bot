@@ -3,11 +3,17 @@ package dev.mayuna.modularbot.console;
 import dev.mayuna.consoleparallax.BaseCommand;
 import dev.mayuna.consoleparallax.CommandInvocationContext;
 import dev.mayuna.modularbot.ModularBot;
+import enterprises.iwakura.sigewine.annotations.RomaritimeBean;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
 
+@RomaritimeBean
+@RequiredArgsConstructor
 public final class StopConsoleCommand implements BaseCommand {
+
+    private final ModularBot modularBot;
 
     @Override
     public @NotNull String getName() {
@@ -31,6 +37,6 @@ public final class StopConsoleCommand implements BaseCommand {
 
     @Override
     public void execute(@NotNull CommandInvocationContext context) {
-        ModularBot.shutdown();
+        modularBot.shutdown();
     }
 }

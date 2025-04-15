@@ -14,7 +14,9 @@ import dev.mayuna.modularbot.objects.ModuleInfo;
 import dev.mayuna.modularbot.objects.ModuleStatus;
 import dev.mayuna.modularbot.util.InputStreamUtils;
 import dev.mayuna.modularbot.util.logging.ModularBotLogger;
+import enterprises.iwakura.sigewine.annotations.RomaritimeBean;
 import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -26,9 +28,12 @@ import java.util.*;
 import java.util.stream.Stream;
 import java.util.zip.ZipFile;
 
+@RomaritimeBean
 public final class DefaultModuleManager implements ModuleManager {
 
     private final static ModularBotLogger LOGGER = ModularBotLogger.create("ModuleManager");
+
+    private final MayusJDAUtilities baseMayusJDAUtilities;
 
     private final List<ClassLoader> moduleClassLoaders = Collections.synchronizedList(new LinkedList<>());
     private List<Module> modules = createModuleList();
@@ -37,6 +42,10 @@ public final class DefaultModuleManager implements ModuleManager {
     private boolean stateLoaded = false;
     private boolean stateEnabled = false;
     private boolean stateUnloaded = false;
+
+    public DefaultModuleManager(@RomaritimeBean(name = "modularBotMayusJDAUtilities") MayusJDAUtilities baseMayusJDAUtilities) {
+        this.baseMayusJDAUtilities = baseMayusJDAUtilities;
+    }
 
     /**
      * Creates empty list for modules
@@ -82,7 +91,7 @@ public final class DefaultModuleManager implements ModuleManager {
             module.setLogger(ModularBotLogger.create(module.getModuleInfo().getName()));
 
             var mayusJdaUtilities = new MayusJDAUtilities();
-            mayusJdaUtilities.copyFrom(ModularBot.getBaseMayusJDAUtilities());
+            mayusJdaUtilities.copyFrom(baseMayusJDAUtilities);
             module.setMayusJDAUtilities(mayusJdaUtilities);
 
             // Add the module's class loader to the list of class loaders
@@ -222,7 +231,7 @@ public final class DefaultModuleManager implements ModuleManager {
             module.setLogger(ModularBotLogger.create(module.getModuleInfo().getName()));
 
             var mayusJdaUtilities = new MayusJDAUtilities();
-            mayusJdaUtilities.copyFrom(ModularBot.getBaseMayusJDAUtilities());
+            mayusJdaUtilities.copyFrom(baseMayusJDAUtilities);
             module.setMayusJDAUtilities(mayusJdaUtilities);
 
             // Add the module's class loader to the list of class loaders

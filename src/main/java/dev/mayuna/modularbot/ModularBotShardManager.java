@@ -3,11 +3,14 @@ package dev.mayuna.modularbot;
 import com.jagrosh.jdautilities.command.CommandClientBuilder;
 import dev.mayuna.mayusjdautils.interactive.InteractiveListener;
 import dev.mayuna.modularbot.config.ModularBotConfig;
+import dev.mayuna.modularbot.managers.DefaultModuleManager;
 import dev.mayuna.modularbot.objects.ModuleStatus;
 import dev.mayuna.modularbot.objects.activity.ModuleActivity;
 import dev.mayuna.modularbot.util.logging.ModularBotLogger;
+import enterprises.iwakura.sigewine.annotations.RomaritimeBean;
 import lombok.Getter;
 import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder;
 import net.dv8tion.jda.api.sharding.ShardManager;
 
@@ -16,12 +19,16 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
+@RomaritimeBean
+@RequiredArgsConstructor
 public final class ModularBotShardManager {
 
     public static final int INVALID_SHARD_ID = -1;
     private final static ModularBotLogger LOGGER = ModularBotLogger.create(ModularBotShardManager.class);
 
-    private final ModularBotConfig.Discord discordSettings;
+    private final ModularBotConfig modularBotConfig;
+    private final DefaultModuleManager moduleManager;
+
     private final Timer presenceActivityUpdaterTimer = new Timer();
     private @Getter CommandClientBuilder commandClientBuilder;
     private @Getter DefaultShardManagerBuilder shardManagerBuilder;
@@ -31,18 +38,11 @@ public final class ModularBotShardManager {
     private int lastActivityIndex = 0;
 
     /**
-     * Creates new instance of {@link ModularBotShardManager}
-     *
-     * @param discordSettings {@link ModularBotConfig.Discord}
-     */
-    public ModularBotShardManager(@NonNull ModularBotConfig.Discord discordSettings) {
-        this.discordSettings = discordSettings;
-    }
-
-    /**
      * Initializes ShardManager
      */
     public boolean init() {
+        final var discordSettings = modularBotConfig.getDiscord();
+
         LOGGER.mdebug("Creating CommandClientBuilder...");
         commandClientBuilder = new CommandClientBuilder()
                 .setOwnerId(discordSettings.getOwnerId())
@@ -145,7 +145,7 @@ public final class ModularBotShardManager {
      * Initializes Presence Activity Cycle
      */
     public void initPresenceActivityCycle() {
-        ModularBotConfig.Discord.PresenceActivityCycle presenceActivityCycle = discordSettings.getPresenceActivityCycle();
+        ModularBotConfig.Discord.PresenceActivityCycle presenceActivityCycle = modularBotConfig.getDiscord().getPresenceActivityCycle();
 
         if (!presenceActivityCycle.isEnabled()) {
             LOGGER.warn("Presence Activity Cycle is disabled, skipping.");
@@ -164,7 +164,7 @@ public final class ModularBotShardManager {
             public void run() {
                 List<ModuleActivity> allActivities = new LinkedList<>();
 
-                ModularBot.getModuleManager().getModules().forEach(module -> {
+                moduleManager.getModules().forEach(module -> {
                     if (module.getModuleStatus() == ModuleStatus.ENABLED) {
                         List<ModuleActivity> activities = module.getModuleActivities().getActivities();
 

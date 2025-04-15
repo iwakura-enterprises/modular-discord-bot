@@ -4,43 +4,59 @@ import dev.mayuna.consoleparallax.ConsoleParallax;
 import dev.mayuna.mayusjdautils.MayusJDAUtilities;
 import dev.mayuna.mayuslibrary.exceptionreporting.UncaughtExceptionReporter;
 import dev.mayuna.modularbot.base.Module;
-import dev.mayuna.modularbot.base.ModuleManager;
 import dev.mayuna.modularbot.config.ModularBotConfig;
-import dev.mayuna.modularbot.console.ModularBotOutputHandler;
 import dev.mayuna.modularbot.console.ModularConsoleCommand;
 import dev.mayuna.modularbot.console.StopConsoleCommand;
 import dev.mayuna.modularbot.managers.DefaultModuleManager;
 import dev.mayuna.modularbot.managers.ModularBotDataManager;
 import dev.mayuna.modularbot.util.logging.ModularBotLogger;
-import java.util.ArrayList;
-import java.util.List;
+import enterprises.iwakura.sigewine.Sigewine;
+import enterprises.iwakura.sigewine.SigewineOptions;
+import enterprises.iwakura.sigewine.annotations.RomaritimeBean;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
+import org.slf4j.event.Level;
 
-import java.util.concurrent.Executors;
+import java.util.ArrayList;
+import java.util.List;
 
+@RomaritimeBean
 public final class ModularBot {
 
     private static final ModularBotLogger LOGGER = ModularBotLogger.create(ModularBot.class);
+    private static final @Getter Sigewine sigewine = new Sigewine(SigewineOptions.builder().logLevel(Level.INFO).build());
 
-    private static final List<Module> internalModules = new ArrayList<>();
+    private final List<Module> internalModules = new ArrayList<>();
 
-    private static @Getter ModularBotConfig config;
-    private static @Getter ConsoleParallax consoleParallax;
-    private static @Getter MayusJDAUtilities baseMayusJDAUtilities;
-    private static @Getter ModuleManager moduleManager;
-    private static @Getter ModularBotDataManager modularBotDataManager;
-    private static @Getter ModularBotShardManager modularBotShardManager;
+    private final @Getter ConsoleParallax consoleParallax;
+    private final @Getter ModularBotDataManager modularBotDataManager;
+    private final @Getter ModularBotShardManager modularBotShardManager;
+    private final @Getter ModularBotConfig config;
+    private final @Getter DefaultModuleManager moduleManager;
+    private final @Getter MayusJDAUtilities baseMayusJDAUtilities;
 
-    private static @Getter @Setter boolean shouldHaltJVM = true;
-    private static @Getter @Setter boolean running;
-    private static @Getter @Setter boolean stopping;
+    private @Getter @Setter boolean shouldHaltJVM = true;
+    private @Getter @Setter boolean running;
+    private @Getter @Setter boolean stopping;
 
-    private ModularBot() {
+    public ModularBot(
+            ConsoleParallax consoleParallax,
+            ModularBotDataManager modularBotDataManager,
+            ModularBotShardManager modularBotShardManager,
+            ModularBotConfig config,
+            DefaultModuleManager moduleManager,
+            @RomaritimeBean(name = "modularBotMayusJDAUtilities")
+            MayusJDAUtilities baseMayusJDAUtilities) {
+        this.consoleParallax = consoleParallax;
+        this.modularBotDataManager = modularBotDataManager;
+        this.modularBotShardManager = modularBotShardManager;
+        this.config = config;
+        this.moduleManager = moduleManager;
+        this.baseMayusJDAUtilities = baseMayusJDAUtilities;
     }
 
-    public static void start(String[] args) {
+    public void start(String[] args) {
         LOGGER.info("Starting ModularDiscordBot @ {}", ModularBotConstants.getVersion());
         LOGGER.info("Made by Mayuna");
 
@@ -64,8 +80,8 @@ public final class ModularBot {
 
         LOGGER.info("Phase 1/6 - Loading core...");
 
-        LOGGER.mdebug("Loading configuration");
-        loadConfiguration();
+        LOGGER.mdebug("Checking configuration");
+        checkConfiguration();
 
         LOGGER.mdebug("Loading ConsoleParallax");
         loadConsoleParallax();
@@ -75,9 +91,6 @@ public final class ModularBot {
 
         LOGGER.mdebug("Registering UncaughtExceptionReporter");
         registerUncaughtExceptionReporter();
-
-        LOGGER.mdebug("Loading Mayu's JDA Utilities");
-        loadMayusJDAUtilities();
 
         LOGGER.mdebug("Preparing ModuleManager");
         prepareModuleManager();
@@ -115,9 +128,7 @@ public final class ModularBot {
     /**
      * Loads configuration
      */
-    private static void loadConfiguration() {
-        config = ModularBotConfig.load();
-
+    private void checkConfiguration() {
         // Failed to load
         if (config == null) {
             shutdown();
@@ -127,22 +138,17 @@ public final class ModularBot {
     /**
      * Loads ConsoleParallax
      */
-    private static void loadConsoleParallax() {
-        consoleParallax = ConsoleParallax.builder()
-                                         .setOutputHandler(new ModularBotOutputHandler())
-                                         .setCommandExecutor(Executors.newCachedThreadPool())
-                                         .build();
-
+    private void loadConsoleParallax() {
         consoleParallax.registerDefaultHelpCommand();
-        consoleParallax.registerCommand(new ModularConsoleCommand());
-        consoleParallax.registerCommand(new StopConsoleCommand());
+        consoleParallax.registerCommand(new ModularConsoleCommand(this));
+        consoleParallax.registerCommand(new StopConsoleCommand(this));
         consoleParallax.start();
     }
 
     /**
      * Registers JVM Shutdown hook
      */
-    private static void registerShutdownHook() {
+    private void registerShutdownHook() {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             if (!stopping) {
                 LOGGER.warn("Modular Discord Bot has not stopped gracefully! Please, use command 'stop' to stop the application. There is a chance that the modules won't be unloaded fully before JVM termination.");
@@ -156,7 +162,7 @@ public final class ModularBot {
     /**
      * Registers exception reporter
      */
-    private static void registerUncaughtExceptionReporter() {
+    private void registerUncaughtExceptionReporter() {
         UncaughtExceptionReporter.register();
         UncaughtExceptionReporter.addExceptionReportConsumer(exceptionReport -> {
             LOGGER.warn("Uncaught exception occurred! Sending to modules...", exceptionReport.getThrowable());
@@ -165,19 +171,9 @@ public final class ModularBot {
     }
 
     /**
-     * Loads {@link MayusJDAUtilities}
-     */
-    private static void loadMayusJDAUtilities() {
-        baseMayusJDAUtilities = new MayusJDAUtilities();
-        baseMayusJDAUtilities.setMessageInfoStyles(new ModularBotStyles(baseMayusJDAUtilities));
-    }
-
-    /**
      * Prepares module manager
      */
-    private static void prepareModuleManager() {
-        moduleManager = new DefaultModuleManager();
-
+    private void prepareModuleManager() {
         if (!internalModules.isEmpty()) {
             LOGGER.info("Adding {} internal modules...", internalModules.size());
             moduleManager.addInternalModules(internalModules.toArray(new Module[0]));
@@ -187,7 +183,7 @@ public final class ModularBot {
     /**
      * Loads modules
      */
-    private static void loadModules() {
+    private void loadModules() {
         if (!moduleManager.loadModules()) {
             shutdown();
         }
@@ -196,9 +192,7 @@ public final class ModularBot {
     /**
      * Loads DataManager
      */
-    private static void loadDataManager() {
-        modularBotDataManager = new ModularBotDataManager(config.getStorageSettings());
-
+    private void loadDataManager() {
         LOGGER.mdebug("Preparing DataManager...");
         modularBotDataManager.prepareStorage();
 
@@ -209,14 +203,14 @@ public final class ModularBot {
     /**
      * Enables modules
      */
-    private static void enableModules() {
+    private void enableModules() {
         moduleManager.enableModules();
     }
 
     /**
      * Initializes Discord stuff such as CommandClientBuilder, etc.
      */
-    private static void initializeModules() {
+    private void initializeModules() {
         LOGGER.mdebug("Processing ConsoleParallax...");
         moduleManager.processConsoleParallax(consoleParallax);
 
@@ -230,9 +224,7 @@ public final class ModularBot {
     /**
      * Creates ShardManager
      */
-    private static void createModularBotShardManager() {
-        modularBotShardManager = new ModularBotShardManager(config.getDiscord());
-
+    private void createModularBotShardManager() {
         LOGGER.mdebug("Initializing ModularBotShardManager...");
         if (!modularBotShardManager.init()) {
             shutdown();
@@ -242,7 +234,7 @@ public final class ModularBot {
     /**
      * Builds shard manager
      */
-    private static void finishModularBotShardManager() {
+    private void finishModularBotShardManager() {
         if (!modularBotShardManager.finish()) {
             shutdown();
         }
@@ -251,7 +243,7 @@ public final class ModularBot {
     /**
      * Connects to Discord
      */
-    private static void connectToDiscord() {
+    private void connectToDiscord() {
         if (!modularBotShardManager.connect()) {
             shutdown();
         }
@@ -260,14 +252,14 @@ public final class ModularBot {
     /**
      * Initializes Presence Activity Cycle
      */
-    private static void initializePresenceActivityCycle() {
+    private void initializePresenceActivityCycle() {
         modularBotShardManager.initPresenceActivityCycle();
     }
 
     /**
      * Shutdowns ModularDiscordBot
      */
-    public static void shutdown() {
+    public void shutdown() {
         stopping = true;
 
         LOGGER.info("Shutting down ModularDiscordBot @ {}", ModularBotConstants.getVersion());
@@ -295,9 +287,10 @@ public final class ModularBot {
 
     /**
      * Adds internal module. Added modules will be loaded upon starting the ModularBot. If it's already started, it will be loaded immediately.
+     *
      * @param modules Modules to add
      */
-    public static void addInternalModules(@NonNull Module... modules) {
+    public void addInternalModules(@NonNull Module... modules) {
         if (running) {
             moduleManager.addInternalModules(modules);
             return;
