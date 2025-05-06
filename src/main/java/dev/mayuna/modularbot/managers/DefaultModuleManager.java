@@ -223,7 +223,18 @@ public final class DefaultModuleManager implements ModuleManager {
                 defaultConfig = new JsonObject();
             }
 
-            Module module = (Module) moduleClassLoader.loadClass(moduleInfo.getMainClass()).getConstructor().newInstance();
+            Module module;
+
+            if (moduleInfo.isSigewineRequired()) {
+                var mainClass = moduleClassLoader.loadClass(moduleInfo.getMainClass());
+                LOGGER.info("Module {} requires Sigewine, treating its package {} (class loader {})...", moduleInfo.getName(), mainClass.getPackageName(), mainClass.getClassLoader());
+                ModularBot.getSigewine().treatment(mainClass.getPackageName(), moduleClassLoader);
+                LOGGER.info("Syringing main class {} for module {}...", mainClass.getCanonicalName(), moduleInfo.getName());
+                module = (Module) ModularBot.getSigewine().syringe(mainClass);
+            } else {
+                module = (Module) moduleClassLoader.loadClass(moduleInfo.getMainClass()).getConstructor().newInstance();
+            }
+
             module.setModuleInfo(moduleInfo);
             module.setModuleStatus(ModuleStatus.NOT_LOADED);
             module.setModuleConfig(new ModuleConfig(module, defaultConfig));
