@@ -17,7 +17,7 @@ import java.nio.file.Path;
 @Getter
 public final class ModuleConfig {
 
-    private final Module module;
+    private final ModuleInfo moduleInfo;
     private final JsonObject defaultConfig;
 
     private Path dataDirectoryPath;
@@ -27,11 +27,11 @@ public final class ModuleConfig {
     /**
      * Creates new {@link ModuleConfig}
      *
-     * @param module        Non-null {@link Module}
+     * @param moduleInfo        Non-null {@link ModuleInfo}
      * @param defaultConfig Non-null {@link JsonObject}
      */
-    public ModuleConfig(@NonNull Module module, @NonNull JsonObject defaultConfig) {
-        this.module = module;
+    public ModuleConfig(@NonNull ModuleInfo moduleInfo, @NonNull JsonObject defaultConfig) {
+        this.moduleInfo = moduleInfo;
         this.defaultConfig = defaultConfig;
 
         reload();
@@ -41,7 +41,6 @@ public final class ModuleConfig {
      * Reloads module's config
      */
     public void reload() {
-        ModuleInfo moduleInfo = module.getModuleInfo();
         dataDirectoryPath = Path.of(String.format(ModularBotConstants.PATH_FOLDER_MODULE_CONFIGS, moduleInfo.getName()));
 
         if (!Files.exists(dataDirectoryPath)) {
@@ -68,7 +67,6 @@ public final class ModuleConfig {
         try {
             mayuJson.save();
         } catch (Exception exception) {
-            ModuleInfo moduleInfo = module.getModuleInfo();
             throw new RuntimeException("Could not save config for module " + moduleInfo.getName() + " (" + moduleInfo.getVersion() + ") with config path " + mayuJson.getPath() + "!", exception);
         }
     }

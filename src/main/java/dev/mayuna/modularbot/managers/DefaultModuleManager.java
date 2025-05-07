@@ -31,6 +31,7 @@ import java.util.zip.ZipFile;
 @RomaritimeBean
 public final class DefaultModuleManager implements ModuleManager {
 
+    public static final String MODULE_CONFIG_BEAN_NAME = "moduleConfig_%s";
     private final static ModularBotLogger LOGGER = ModularBotLogger.create("ModuleManager");
 
     private final MayusJDAUtilities baseMayusJDAUtilities;
@@ -86,7 +87,7 @@ public final class DefaultModuleManager implements ModuleManager {
         var listModules = List.of(internalModules);
         listModules.forEach(module -> {
             module.setModuleStatus(ModuleStatus.NOT_LOADED);
-            module.setModuleConfig(new ModuleConfig(module, new JsonObject()));
+            module.setModuleConfig(new ModuleConfig(module.getModuleInfo(), new JsonObject()));
             module.setModuleScheduler(new ModuleScheduler(module));
             module.setLogger(ModularBotLogger.create(module.getModuleInfo().getName()));
 
@@ -223,12 +224,24 @@ public final class DefaultModuleManager implements ModuleManager {
                 defaultConfig = new JsonObject();
             }
 
+            final var moduleConfig = new ModuleConfig(moduleInfo, defaultConfig);
+            LOGGER.info("Loading configuration for module {}...", moduleInfo.getName());
+            moduleConfig.copyDefaultsIfEmpty();
+            moduleConfig.reload();
+
             Module module;
 
             if (moduleInfo.isSigewineRequired()) {
                 var mainClass = moduleClassLoader.loadClass(moduleInfo.getMainClass());
-                LOGGER.info("Module {} requires Sigewine, treating its package {} (class loader {})...", moduleInfo.getName(), mainClass.getPackageName(), mainClass.getClassLoader());
-                ModularBot.getSigewine().treatment(mainClass.getPackageName(), moduleClassLoader);
+
+                final var moduleConfigBeanName = MODULE_CONFIG_BEAN_NAME.formatted(moduleInfo.getName());
+                LOGGER.mdebug("Adding module config to bean as {}: {}", moduleConfigBeanName, moduleConfig);
+                ModularBot.getSigewine().getBeans().put(moduleConfigBeanName.formatted(moduleInfo.getName()), moduleConfig);
+
+                final var modulePackagePath = Optional.ofNullable(moduleInfo.getSigewinePackagePath()).orElse(mainClass.getPackageName());
+                LOGGER.info("Module {} requires Sigewine, treating its package {} (class loader {})...", moduleInfo.getName(), modulePackagePath, mainClass.getClassLoader());
+                ModularBot.getSigewine().treatment(modulePackagePath, moduleClassLoader);
+
                 LOGGER.info("Syringing main class {} for module {}...", mainClass.getCanonicalName(), moduleInfo.getName());
                 module = (Module) ModularBot.getSigewine().syringe(mainClass);
             } else {
@@ -237,7 +250,7 @@ public final class DefaultModuleManager implements ModuleManager {
 
             module.setModuleInfo(moduleInfo);
             module.setModuleStatus(ModuleStatus.NOT_LOADED);
-            module.setModuleConfig(new ModuleConfig(module, defaultConfig));
+            module.setModuleConfig(moduleConfig);
             module.setModuleScheduler(new ModuleScheduler(module));
             module.setLogger(ModularBotLogger.create(module.getModuleInfo().getName()));
 

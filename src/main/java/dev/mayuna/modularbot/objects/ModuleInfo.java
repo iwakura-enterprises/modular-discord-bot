@@ -5,6 +5,7 @@ import com.google.gson.JsonObject;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 
 import java.io.IOException;
 
@@ -13,6 +14,7 @@ import java.io.IOException;
  */
 @Getter
 @Builder
+@RequiredArgsConstructor
 public final class ModuleInfo {
 
     private final String name;
@@ -20,22 +22,11 @@ public final class ModuleInfo {
     private final String author;
     private final String version;
     private final boolean sigewineRequired;
+    private final String sigewinePackagePath;
     private final String[] depend;
     private final String[] softDepend;
     private final String[] loadBefore;
     private final String[] exceptionHandlingPackages;
-
-    private ModuleInfo(@NonNull String name, String mainClass, @NonNull String author, @NonNull String version, boolean sigewineRequired, @NonNull String[] depend, @NonNull String[] softDepend, @NonNull String[] loadBefore, @NonNull String[] exceptionHandlingPackages) {
-        this.name = name;
-        this.mainClass = mainClass;
-        this.author = author;
-        this.version = version;
-        this.sigewineRequired = sigewineRequired;
-        this.depend = depend;
-        this.softDepend = softDepend;
-        this.loadBefore = loadBefore;
-        this.exceptionHandlingPackages = exceptionHandlingPackages;
-    }
 
     /**
      * Creates {@link ModuleInfo} for internal use
@@ -107,13 +98,14 @@ public final class ModuleInfo {
         String version = jsonObject.has("version") ? jsonObject.get("version").getAsString() : "Unknown version";
         String mainClass = jsonObject.get("mainClass").getAsString();
         boolean sigewineRequired = jsonObject.has("sigewineRequired") && jsonObject.get("sigewineRequired").getAsBoolean();
+        String sigewinePackagePath = jsonObject.has("sigewinePackagePath") ? jsonObject.get("sigewinePackagePath").getAsString() : null;
 
         String[] depend = jsonObject.has("depend") ? jsonArrayToStringArray(jsonObject.getAsJsonArray("depend")) : new String[0];
         String[] softDepend = jsonObject.has("softDepend") ? jsonArrayToStringArray(jsonObject.getAsJsonArray("softDepend")) : new String[0];
         String[] loadBefore = jsonObject.has("loadBefore") ? jsonArrayToStringArray(jsonObject.getAsJsonArray("loadBefore")) : new String[0];
         String[] exceptionHandlingPackages = jsonObject.has("exceptionHandlingPackages") ? jsonArrayToStringArray(jsonObject.getAsJsonArray("exceptionHandlingPackages")) : new String[0];
 
-        return new ModuleInfo(name, mainClass, author, version, sigewineRequired, depend, softDepend, loadBefore, exceptionHandlingPackages);
+        return new ModuleInfo(name, mainClass, author, version, sigewineRequired, sigewinePackagePath, depend, softDepend, loadBefore, exceptionHandlingPackages);
     }
 
     private static String[] jsonArrayToStringArray(JsonArray jsonArray) {
