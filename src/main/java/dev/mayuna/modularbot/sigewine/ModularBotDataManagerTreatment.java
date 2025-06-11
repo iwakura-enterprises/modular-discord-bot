@@ -2,7 +2,7 @@ package dev.mayuna.modularbot.sigewine;
 
 import dev.mayuna.modularbot.config.ModularBotConfig;
 import dev.mayuna.modularbot.managers.ModularBotDataManager;
-import enterprises.iwakura.sigewine.annotations.RomaritimeBean;
+import enterprises.iwakura.sigewine.core.annotations.RomaritimeBean;
 import lombok.RequiredArgsConstructor;
 
 @RomaritimeBean

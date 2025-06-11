@@ -7,7 +7,7 @@ import dev.mayuna.modularbot.managers.DefaultModuleManager;
 import dev.mayuna.modularbot.objects.ModuleStatus;
 import dev.mayuna.modularbot.objects.activity.ModuleActivity;
 import dev.mayuna.modularbot.util.logging.ModularBotLogger;
-import enterprises.iwakura.sigewine.annotations.RomaritimeBean;
+import enterprises.iwakura.sigewine.core.annotations.RomaritimeBean;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;

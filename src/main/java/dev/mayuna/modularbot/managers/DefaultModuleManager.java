@@ -14,9 +14,9 @@ import dev.mayuna.modularbot.objects.ModuleInfo;
 import dev.mayuna.modularbot.objects.ModuleStatus;
 import dev.mayuna.modularbot.util.InputStreamUtils;
 import dev.mayuna.modularbot.util.logging.ModularBotLogger;
-import enterprises.iwakura.sigewine.annotations.RomaritimeBean;
+import enterprises.iwakura.sigewine.core.BeanDefinition;
+import enterprises.iwakura.sigewine.core.annotations.RomaritimeBean;
 import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -236,7 +236,9 @@ public final class DefaultModuleManager implements ModuleManager {
 
                 final var moduleConfigBeanName = MODULE_CONFIG_BEAN_NAME.formatted(moduleInfo.getName());
                 LOGGER.mdebug("Adding module config to bean as {}: {}", moduleConfigBeanName, moduleConfig);
-                ModularBot.getSigewine().getBeans().put(moduleConfigBeanName.formatted(moduleInfo.getName()), moduleConfig);
+                // FIXME: Better way to create bean definition
+                final var beanDefinition = new BeanDefinition(moduleConfigBeanName.formatted(moduleInfo.getName()), moduleConfig.getClass(), null);
+                ModularBot.getSigewine().getSingletonBeans().put(beanDefinition, moduleConfig);
 
                 final var modulePackagePath = Optional.ofNullable(moduleInfo.getSigewinePackagePath()).orElse(mainClass.getPackageName());
                 LOGGER.info("Module {} requires Sigewine, treating its package {} (class loader {})...", moduleInfo.getName(), modulePackagePath, mainClass.getClassLoader());

@@ -10,13 +10,12 @@ import dev.mayuna.modularbot.console.StopConsoleCommand;
 import dev.mayuna.modularbot.managers.DefaultModuleManager;
 import dev.mayuna.modularbot.managers.ModularBotDataManager;
 import dev.mayuna.modularbot.util.logging.ModularBotLogger;
-import enterprises.iwakura.sigewine.Sigewine;
-import enterprises.iwakura.sigewine.SigewineOptions;
-import enterprises.iwakura.sigewine.annotations.RomaritimeBean;
+import enterprises.iwakura.sigewine.core.Sigewine;
+import enterprises.iwakura.sigewine.core.SigewineOptions;
+import enterprises.iwakura.sigewine.core.annotations.RomaritimeBean;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
-import org.slf4j.event.Level;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,7 +24,7 @@ import java.util.List;
 public final class ModularBot {
 
     private static final ModularBotLogger LOGGER = ModularBotLogger.create(ModularBot.class);
-    private static final @Getter Sigewine sigewine = new Sigewine(SigewineOptions.builder().logLevel(Level.INFO).build());
+    private static final @Getter Sigewine sigewine = new Sigewine(SigewineOptions.builder().build());
 
     private final List<Module> internalModules = new ArrayList<>();
 

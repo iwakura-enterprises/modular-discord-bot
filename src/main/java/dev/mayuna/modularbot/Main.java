@@ -13,7 +13,7 @@ public final class Main {
         LOGGER.info("Initializing Sigewine...");
         final var sigewine = ModularBot.getSigewine();
         sigewine.treatment(Main.class);
-        LOGGER.info("Sigewine initialized with {} beans", ModularBot.getSigewine().getBeans().size());
+        LOGGER.info("Sigewine initialized with {} beans", ModularBot.getSigewine().getSingletonBeans().size());
 
         LOGGER.info("Getting ModularBot bean...");
         modularBot = sigewine.syringe(ModularBot.class);

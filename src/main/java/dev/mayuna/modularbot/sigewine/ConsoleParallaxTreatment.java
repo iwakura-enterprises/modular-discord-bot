@@ -2,7 +2,7 @@ package dev.mayuna.modularbot.sigewine;
 
 import dev.mayuna.consoleparallax.ConsoleParallax;
 import dev.mayuna.modularbot.console.ModularBotOutputHandler;
-import enterprises.iwakura.sigewine.annotations.RomaritimeBean;
+import enterprises.iwakura.sigewine.core.annotations.RomaritimeBean;
 
 import java.util.concurrent.Executors;
 

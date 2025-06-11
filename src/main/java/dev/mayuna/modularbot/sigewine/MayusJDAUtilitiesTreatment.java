@@ -2,7 +2,7 @@ package dev.mayuna.modularbot.sigewine;
 
 import dev.mayuna.mayusjdautils.MayusJDAUtilities;
 import dev.mayuna.modularbot.ModularBotStyles;
-import enterprises.iwakura.sigewine.annotations.RomaritimeBean;
+import enterprises.iwakura.sigewine.core.annotations.RomaritimeBean;
 
 public class MayusJDAUtilitiesTreatment {
 

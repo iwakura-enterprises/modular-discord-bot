@@ -3,7 +3,7 @@ package dev.mayuna.modularbot.console;
 import dev.mayuna.consoleparallax.BaseCommand;
 import dev.mayuna.consoleparallax.CommandInvocationContext;
 import dev.mayuna.modularbot.ModularBot;
-import enterprises.iwakura.sigewine.annotations.RomaritimeBean;
+import enterprises.iwakura.sigewine.core.annotations.RomaritimeBean;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
