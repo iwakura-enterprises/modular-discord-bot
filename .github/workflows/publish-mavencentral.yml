@@ -4,6 +4,7 @@ on:
   push:
     tags:
       - '**'
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -19,6 +20,9 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
       - name: Test
+        env:
+          ORG_GRADLE_PROJECT_sonatypeUsername: ${{ secrets.SONATYPEUSERNAME }}
+          ORG_GRADLE_PROJECT_sonatypePassword: ${{ secrets.SONATYPEPASSWORD }}
         run: ./gradlew test
   deploy:
     runs-on: ubuntu-latest
@@ -32,8 +36,9 @@ jobs:
           distribution: 'temurin'
       - name: Publish, Close, and Release to MavenCentral
         env:
-          ORG_GRADLE_PROJECT_ossrhUsername: ${{ secrets.OSSRHUSERNAME }}
-          ORG_GRADLE_PROJECT_ossrhPassword: ${{ secrets.OSSRHPASSWORD }}
-          ORG_GRADLE_PROJECT_signingKey: ${{ secrets.PGP_SECRET }}
-          ORG_GRADLE_PROJECT_signingPassword: ${{ secrets.SIGNING_PASSWORD }}
+          ORG_GRADLE_PROJECT_sonatypeUsername: ${{ secrets.SONATYPEUSERNAME }}
+          ORG_GRADLE_PROJECT_sonatypePassword: ${{ secrets.SONATYPEPASSWORD }}
+          GPG_KEY_ID: ${{ secrets.PGP_KEY_ID }}
+          GPG_PRIVATE_KEY: ${{ secrets.PGP_SECRET }}
+          GPG_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
         run: ./gradlew publishCloseAndRelease
