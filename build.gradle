@@ -89,28 +89,6 @@ dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter'
 }
 
-// == Quick tasks == //
-
-task publishCloseAndRelease() {
-    dependsOn 'cleanBuildMedivhMavenRepo'
-    dependsOn 'uploadToSonatype'
-    dependsOn 'publishDeployment'
-}
-
-shadowJar {
-    archiveFileName = "modular-discord-bot.jar"
-
-    manifest {
-        attributes 'Main-Class': 'dev.mayuna.modularbot.BootstrapMain'
-    }
-
-    archiveVersion.set(version)
-    archiveClassifier.set('all')
-    destinationDirectory = file("$buildDir/libs")
-}
-
-// == Maven publishing == //
-
 medivhPublisher {
     groupId = project.group.toString()
     artifactId = project.name
@@ -139,11 +117,6 @@ medivhPublisher {
     }
 }
 
-java {
-    sourceCompatibility = JavaVersion.VERSION_21
-    targetCompatibility = JavaVersion.VERSION_21
-}
-
 test {
     useJUnitPlatform()
     finalizedBy jacocoTestReport
@@ -158,6 +131,37 @@ jacocoTestReport {
 // UTF-8
 tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
+
+jar {
+    manifest {
+        attributes(
+                'Main-Class': 'enterprises.iwakura.ganyu.test.Main',
+        )
+    }
+}
+
+task publishCloseAndRelease() {
+    dependsOn 'cleanBuildMedivhMavenRepo'
+    dependsOn 'uploadToSonatype'
+    dependsOn 'publishDeployment'
+}
+
+shadowJar {
+    archiveBaseName.set('modular-discord-bot')
+
+    manifest {
+        attributes 'Main-Class': 'enterprises.iwakura.modularbot.BootstrapMain'
+    }
+
+    archiveVersion.set(version)
+    archiveClassifier.set('all')
+    destinationDirectory = file("$buildDir/libs")
 }
 
 task javadocJar(type: Jar) {
@@ -176,4 +180,13 @@ signing {
             System.getenv("GPG_PRIVATE_KEY"),
             System.getenv("GPG_PASSWORD")
     )
+}
+
+java {
+    withJavadocJar()
+    withSourcesJar()
+}
+
+tasks.withType(JavaCompile) {
+    options.release = 21
 }
