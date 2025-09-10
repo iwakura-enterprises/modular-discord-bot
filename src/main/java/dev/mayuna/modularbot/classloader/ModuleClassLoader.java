@@ -1,4 +1,4 @@
-package dev.mayuna.modularbot.classloaders;
+package dev.mayuna.modularbot.classloader;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -20,14 +20,20 @@ public final class ModuleClassLoader extends URLClassLoader {
     /**
      * Creates new class loader for specified jar file with specified {@link ClassLoader} as parent
      *
-     * @param jarFile           Jar File
+     * @param jarFiles          Jar Files
      * @param parent            Parent {@link ClassLoader}
      * @param otherClassLoaders Other module's {@link ClassLoader}s
      *
      * @throws MalformedURLException If the jar file could not be converted to URL
      */
-    public ModuleClassLoader(Path jarFile, ClassLoader parent, List<ClassLoader> otherClassLoaders) throws MalformedURLException {
-        super(new URL[] {jarFile.toUri().toURL()}, parent);
+    public ModuleClassLoader(List<Path> jarFiles, ClassLoader parent, List<ClassLoader> otherClassLoaders) throws MalformedURLException {
+        super(jarFiles.stream().map(path -> {
+            try {
+                return path.toUri().toURL();
+            } catch (MalformedURLException e) {
+                throw new RuntimeException(e);
+            }
+        }).toArray(URL[]::new), parent);
         this.otherClassLoaders = otherClassLoaders;
     }
 

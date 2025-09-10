@@ -1,9 +1,10 @@
 package dev.mayuna.modularbot.base;
 
 import com.jagrosh.jdautilities.command.CommandClientBuilder;
-import dev.mayuna.consoleparallax.ConsoleParallax;
-import dev.mayuna.modularbot.util.logging.ModularBotLogger;
+import enterprises.iwakura.ganyu.Ganyu;
+import lombok.extern.log4j.Log4j2;
 import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder;
+import org.apache.logging.log4j.LogManager;
 
 import java.util.List;
 import java.util.Optional;
@@ -12,13 +13,6 @@ import java.util.Optional;
  * Module manager
  */
 public interface ModuleManager {
-
-    /**
-     * Returns ModuleManager's logger
-     *
-     * @return {@link ModularBotLogger}
-     */
-    ModularBotLogger getLogger();
 
     /**
      * Returns list of loaded modules in memory.
@@ -100,8 +94,8 @@ public interface ModuleManager {
         getModules().forEach(module -> module.onCommandClientBuilderInitialization(commandClientBuilder));
     }
 
-    default void processConsoleParallax(ConsoleParallax consoleParallax) {
-        getModules().forEach(module -> module.onConsoleCommandRegistration(consoleParallax));
+    default void processGanyu(Ganyu ganyu) {
+        getModules().forEach(module -> module.onConsoleCommandRegistration(ganyu));
     }
 
     default void processShardBuilder(DefaultShardManagerBuilder shardManagerBuilder) {
@@ -120,7 +114,7 @@ public interface ModuleManager {
                     }
                 }
             } catch (Exception exception) {
-                getLogger().error("Exception occurred while processing modules with uncaught exception!", exception);
+                LogManager.getLogger(ModuleManager.class).error("Exception occurred while processing modules with uncaught exception!", exception);
             }
         });
     }

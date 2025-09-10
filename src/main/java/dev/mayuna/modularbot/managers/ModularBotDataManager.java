@@ -1,21 +1,21 @@
 package dev.mayuna.modularbot.managers;
 
 import dev.mayuna.modularbot.config.StorageSettings;
-import dev.mayuna.modularbot.util.logging.ModularBotLogger;
 import dev.mayuna.pumpk1n.Pumpk1n;
 import dev.mayuna.pumpk1n.objects.DataHolder;
 import dev.mayuna.pumpk1n.util.BaseLogger;
 import lombok.NonNull;
+import lombok.extern.log4j.Log4j2;
 
 import java.util.UUID;
 
 /**
  * Extension to the {@link Pumpk1n}
  */
+@Log4j2
 public final class ModularBotDataManager extends Pumpk1n {
 
     public static final UUID GLOBAL_DATA_HOLDER_UUID = UUID.fromString("00000000-0000-0000-0000-000000000000");
-    private static final ModularBotLogger LOGGER = ModularBotLogger.create("DataManager");
     private final StorageSettings storageSettings;
 
     /**
@@ -39,9 +39,9 @@ public final class ModularBotDataManager extends Pumpk1n {
             @Override
             public void log(@NonNull String message, Throwable throwable) {
                 if (throwable == null) {
-                    LOGGER.log(storageSettings.getLogLevel().getLog4jLevel(), message);
+                    log.log(storageSettings.getLogLevel().getLog4jLevel(), message);
                 } else {
-                    LOGGER.log(storageSettings.getLogLevel().getLog4jLevel(), message, throwable);
+                    log.log(storageSettings.getLogLevel().getLog4jLevel(), message, throwable);
                 }
             }
         });

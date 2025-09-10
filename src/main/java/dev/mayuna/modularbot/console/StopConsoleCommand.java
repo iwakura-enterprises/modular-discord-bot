@@ -1,42 +1,26 @@
 package dev.mayuna.modularbot.console;
 
-import dev.mayuna.consoleparallax.BaseCommand;
-import dev.mayuna.consoleparallax.CommandInvocationContext;
 import dev.mayuna.modularbot.ModularBot;
+import enterprises.iwakura.ganyu.CommandInvocationContext;
+import enterprises.iwakura.ganyu.GanyuCommand;
+import enterprises.iwakura.ganyu.annotation.Command;
+import enterprises.iwakura.ganyu.annotation.DefaultCommand;
+import enterprises.iwakura.ganyu.annotation.Description;
+import enterprises.iwakura.ganyu.annotation.Syntax;
 import enterprises.iwakura.sigewine.core.annotations.RomaritimeBean;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
 
 @RomaritimeBean
 @RequiredArgsConstructor
-public final class StopConsoleCommand implements BaseCommand {
+@Command("stop")
+@Description("Stops the ModularDiscordBot")
+@Syntax("")
+public final class StopConsoleCommand implements GanyuCommand {
 
-    private final ModularBot modularBot;
-
-    @Override
-    public @NotNull String getName() {
-        return "stop";
-    }
-
-    @Override
-    public @NotNull String getUsage() {
-        return "Stops the ModularDiscordBot";
-    }
-
-    @Override
-    public @NotNull String getSyntax() {
-        return "N/A";
-    }
-
-    @Override
-    public @NotNull String getDescription() {
-        return "Stops the ModularDiscordBot";
-    }
-
-    @Override
+    @DefaultCommand
     public void execute(@NotNull CommandInvocationContext context) {
+        var modularBot = ModularBot.getSigewine().syringe(ModularBot.class);
         modularBot.shutdown();
     }
 }

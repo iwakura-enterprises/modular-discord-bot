@@ -1,53 +1,52 @@
 package dev.mayuna.modularbot;
 
-import dev.mayuna.consoleparallax.ConsoleParallax;
 import dev.mayuna.mayusjdautils.MayusJDAUtilities;
 import dev.mayuna.mayuslibrary.exceptionreporting.UncaughtExceptionReporter;
 import dev.mayuna.modularbot.base.Module;
 import dev.mayuna.modularbot.config.ModularBotConfig;
-import dev.mayuna.modularbot.console.ModularConsoleCommand;
-import dev.mayuna.modularbot.console.StopConsoleCommand;
 import dev.mayuna.modularbot.managers.DefaultModuleManager;
 import dev.mayuna.modularbot.managers.ModularBotDataManager;
-import dev.mayuna.modularbot.util.logging.ModularBotLogger;
+import enterprises.iwakura.ganyu.Ganyu;
 import enterprises.iwakura.sigewine.core.Sigewine;
 import enterprises.iwakura.sigewine.core.SigewineOptions;
 import enterprises.iwakura.sigewine.core.annotations.RomaritimeBean;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
+import lombok.extern.log4j.Log4j2;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@Getter
+@Setter
+@Log4j2
 @RomaritimeBean
 public final class ModularBot {
 
-    private static final ModularBotLogger LOGGER = ModularBotLogger.create(ModularBot.class);
     private static final @Getter Sigewine sigewine = new Sigewine(SigewineOptions.builder().build());
 
     private final List<Module> internalModules = new ArrayList<>();
 
-    private final @Getter ConsoleParallax consoleParallax;
-    private final @Getter ModularBotDataManager modularBotDataManager;
-    private final @Getter ModularBotShardManager modularBotShardManager;
-    private final @Getter ModularBotConfig config;
-    private final @Getter DefaultModuleManager moduleManager;
-    private final @Getter MayusJDAUtilities baseMayusJDAUtilities;
+    private final Ganyu ganyu;
+    private final ModularBotDataManager modularBotDataManager;
+    private final ModularBotShardManager modularBotShardManager;
+    private final ModularBotConfig config;
+    private final DefaultModuleManager moduleManager;
+    private final MayusJDAUtilities baseMayusJDAUtilities;
 
-    private @Getter @Setter boolean shouldHaltJVM = true;
-    private @Getter @Setter boolean running;
-    private @Getter @Setter boolean stopping;
+    private boolean running;
+    private boolean stopping;
 
     public ModularBot(
-            ConsoleParallax consoleParallax,
+            Ganyu ganyu,
             ModularBotDataManager modularBotDataManager,
             ModularBotShardManager modularBotShardManager,
             ModularBotConfig config,
             DefaultModuleManager moduleManager,
             @RomaritimeBean(name = "modularBotMayusJDAUtilities")
             MayusJDAUtilities baseMayusJDAUtilities) {
-        this.consoleParallax = consoleParallax;
+        this.ganyu = ganyu;
         this.modularBotDataManager = modularBotDataManager;
         this.modularBotShardManager = modularBotShardManager;
         this.config = config;
@@ -56,17 +55,17 @@ public final class ModularBot {
     }
 
     public void start(String[] args) {
-        LOGGER.info("Starting ModularDiscordBot @ {}", ModularBotConstants.getVersion());
-        LOGGER.info("Made by Mayuna");
+        log.info("Starting ModularDiscordBot @ {}", ModularBotConstants.getVersion());
+        log.info("Made by Mayuna");
 
-        LOGGER.mdebug("Java Runtime Information:");
-        LOGGER.mdebug("Java Version: {}", System.getProperty("java.version"));
-        LOGGER.mdebug("Java Vendor: {}", System.getProperty("java.vendor"));
-        LOGGER.mdebug("Java VM Name: {}", System.getProperty("java.vm.name"));
-        LOGGER.mdebug("Java VM Version: {}", System.getProperty("java.vm.version"));
-        LOGGER.mdebug("Java VM Vendor: {}", System.getProperty("java.vm.vendor"));
+        log.info("Java Runtime Information:");
+        log.info("Java Version: {}", System.getProperty("java.version"));
+        log.info("Java Vendor: {}", System.getProperty("java.vendor"));
+        log.info("Java VM Name: {}", System.getProperty("java.vm.name"));
+        log.info("Java VM Version: {}", System.getProperty("java.vm.version"));
+        log.info("Java VM Vendor: {}", System.getProperty("java.vm.vendor"));
 
-        LOGGER.info("""
+        log.info("""
                             \s
                             \033[0;35m  __  __         _      _            ___  _                   _   ___      _  \s
                             \033[0;35m |  \\/  |___  __| |_  _| |__ _ _ _  |   \\(_)___ __ ___ _ _ __| | | _ ) ___| |_\s
@@ -74,53 +73,50 @@ public final class ModularBot {
                             \033[0;35m |_|  |_\\___/\\__,_|\\_,_|_\\__,_|_|   |___/|_/__/\\__\\___/_| \\__,_| |___/\\___/\\__|\033[0m
                             """);
 
-        LOGGER.info("Loading...");
+        log.info("Loading...");
         final long startMillis = System.currentTimeMillis();
 
-        LOGGER.info("Phase 1/6 - Loading core...");
+        log.info("Phase 1/6 - Loading core...");
 
-        LOGGER.mdebug("Checking configuration");
+        log.info("Checking configuration");
         checkConfiguration();
 
-        LOGGER.mdebug("Loading ConsoleParallax");
-        loadConsoleParallax();
-
-        LOGGER.mdebug("Registering Shutdown hook");
+        log.info("Registering Shutdown hook");
         registerShutdownHook();
 
-        LOGGER.mdebug("Registering UncaughtExceptionReporter");
+        log.info("Registering UncaughtExceptionReporter");
         registerUncaughtExceptionReporter();
 
-        LOGGER.mdebug("Preparing ModuleManager");
+        log.info("Preparing ModuleManager");
         prepareModuleManager();
 
-        LOGGER.info("Phase 2/6 - Loading modules...");
+        log.info("Phase 2/6 - Loading modules...");
         loadModules();
 
-        LOGGER.info("Phase 3/6 - Loading DataManager...");
+        log.info("Phase 3/6 - Loading DataManager...");
         loadDataManager();
 
-        LOGGER.info("Phase 4/6 - Enabling modules...");
+        log.info("Phase 4/6 - Enabling modules...");
         enableModules();
 
-        LOGGER.info("Phase 5/6 - Preparing JDA...");
+        log.info("Phase 5/6 - Preparing JDA...");
 
-        LOGGER.mdebug("Creating ModularBotShardManager...");
+        log.info("Creating ModularBotShardManager...");
         createModularBotShardManager();
 
-        LOGGER.mdebug("Initializing modules...");
+        log.info("Initializing modules...");
         initializeModules();
 
-        LOGGER.mdebug("Finishing ModularBotShardManager...");
+        log.info("Finishing ModularBotShardManager...");
         finishModularBotShardManager();
 
-        LOGGER.info("Phase 6/6 - Connecting to Discord...");
+        log.info("Phase 6/6 - Connecting to Discord...");
         connectToDiscord();
 
-        LOGGER.success("Successfully started ModularDiscordBot (took {}ms)", (System.currentTimeMillis() - startMillis));
+        log.info("Successfully started ModularDiscordBot (took {}ms)", (System.currentTimeMillis() - startMillis));
         running = true;
 
-        LOGGER.info("Initializing Presence Activity Cycle...");
+        log.info("Initializing Presence Activity Cycle...");
         initializePresenceActivityCycle();
     }
 
@@ -135,24 +131,14 @@ public final class ModularBot {
     }
 
     /**
-     * Loads ConsoleParallax
-     */
-    private void loadConsoleParallax() {
-        consoleParallax.registerDefaultHelpCommand();
-        consoleParallax.registerCommand(new ModularConsoleCommand(this));
-        consoleParallax.registerCommand(new StopConsoleCommand(this));
-        consoleParallax.start();
-    }
-
-    /**
      * Registers JVM Shutdown hook
      */
     private void registerShutdownHook() {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             if (!stopping) {
-                LOGGER.warn("Modular Discord Bot has not stopped gracefully! Please, use command 'stop' to stop the application. There is a chance that the modules won't be unloaded fully before JVM termination.");
+                log.warn("Modular Discord Bot has not stopped gracefully! Please, use command 'stop' to stop the application. There is a chance that the modules won't be unloaded fully before JVM termination.");
 
-                LOGGER.info("Shutting down Modular Discord Bot...");
+                log.info("Shutting down Modular Discord Bot...");
                 shutdown();
             }
         }));
@@ -164,7 +150,7 @@ public final class ModularBot {
     private void registerUncaughtExceptionReporter() {
         UncaughtExceptionReporter.register();
         UncaughtExceptionReporter.addExceptionReportConsumer(exceptionReport -> {
-            LOGGER.warn("Uncaught exception occurred! Sending to modules...", exceptionReport.getThrowable());
+            log.warn("Uncaught exception occurred! Sending to modules...", exceptionReport.getThrowable());
             moduleManager.processException(exceptionReport.getThrowable());
         });
     }
@@ -174,7 +160,7 @@ public final class ModularBot {
      */
     private void prepareModuleManager() {
         if (!internalModules.isEmpty()) {
-            LOGGER.info("Adding {} internal modules...", internalModules.size());
+            log.info("Adding {} internal modules...", internalModules.size());
             moduleManager.addInternalModules(internalModules.toArray(new Module[0]));
         }
     }
@@ -192,10 +178,10 @@ public final class ModularBot {
      * Loads DataManager
      */
     private void loadDataManager() {
-        LOGGER.mdebug("Preparing DataManager...");
+        log.info("Preparing DataManager...");
         modularBotDataManager.prepareStorage();
 
-        LOGGER.mdebug("Preparing GlobalDataHolder...");
+        log.info("Preparing GlobalDataHolder...");
         modularBotDataManager.getGlobalDataHolder();
     }
 
@@ -210,13 +196,13 @@ public final class ModularBot {
      * Initializes Discord stuff such as CommandClientBuilder, etc.
      */
     private void initializeModules() {
-        LOGGER.mdebug("Processing ConsoleParallax...");
-        moduleManager.processConsoleParallax(consoleParallax);
+        log.info("Processing Ganyu...");
+        moduleManager.processGanyu(ganyu);
 
-        LOGGER.mdebug("Processing CommandClientBuilder...");
+        log.info("Processing CommandClientBuilder...");
         moduleManager.processCommandClientBuilder(modularBotShardManager.getCommandClientBuilder());
 
-        LOGGER.mdebug("Processing ShardManagerBuilder...");
+        log.info("Processing ShardManagerBuilder...");
         moduleManager.processShardBuilder(modularBotShardManager.getShardManagerBuilder());
     }
 
@@ -224,7 +210,7 @@ public final class ModularBot {
      * Creates ShardManager
      */
     private void createModularBotShardManager() {
-        LOGGER.mdebug("Initializing ModularBotShardManager...");
+        log.info("Initializing ModularBotShardManager...");
         if (!modularBotShardManager.init()) {
             shutdown();
         }
@@ -261,27 +247,25 @@ public final class ModularBot {
     public void shutdown() {
         stopping = true;
 
-        LOGGER.info("Shutting down ModularDiscordBot @ {}", ModularBotConstants.getVersion());
+        log.info("Shutting down ModularDiscordBot @ {}", ModularBotConstants.getVersion());
 
         internalModules.clear();
 
-        LOGGER.info("Shutting down ConsoleParallax...");
-        consoleParallax.interrupt();
+        log.info("Shutting down Ganyu...");
+        ganyu.stop();
 
-        LOGGER.info("Unloading modules...");
+        log.info("Unloading modules...");
         moduleManager.unloadModules();
 
-        LOGGER.info("Disconnecting from Discord...");
+        log.info("Disconnecting from Discord...");
         if (modularBotShardManager != null) {
             modularBotShardManager.shutdown();
         }
 
-        LOGGER.success("Shutdown completed");
+        log.info("Shutdown completed");
 
-        if (shouldHaltJVM) {
-            LOGGER.info("Halting JVM...");
-            Runtime.getRuntime().halt(0);
-        }
+        log.info("Halting JVM...");
+        Runtime.getRuntime().halt(0);
     }
 
     /**
@@ -296,7 +280,7 @@ public final class ModularBot {
         }
 
         var listModules = List.of(modules);
-        LOGGER.info("Adding {} internal modules", listModules.size());
+        log.info("Adding {} internal modules", listModules.size());
         internalModules.addAll(listModules);
     }
 }

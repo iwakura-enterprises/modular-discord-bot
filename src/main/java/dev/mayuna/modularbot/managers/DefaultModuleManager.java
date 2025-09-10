@@ -5,18 +5,21 @@ import com.google.gson.JsonParser;
 import dev.mayuna.mayusjdautils.MayusJDAUtilities;
 import dev.mayuna.modularbot.ModularBot;
 import dev.mayuna.modularbot.ModularBotConstants;
+import dev.mayuna.modularbot.amber.ModuleAmberLogger;
 import dev.mayuna.modularbot.base.Module;
 import dev.mayuna.modularbot.base.ModuleManager;
-import dev.mayuna.modularbot.classloaders.ModuleClassLoader;
+import dev.mayuna.modularbot.classloader.ModuleClassLoader;
 import dev.mayuna.modularbot.concurrent.ModuleScheduler;
+import dev.mayuna.modularbot.irminsul.ModularBotIrminsul;
 import dev.mayuna.modularbot.objects.ModuleConfig;
 import dev.mayuna.modularbot.objects.ModuleInfo;
 import dev.mayuna.modularbot.objects.ModuleStatus;
 import dev.mayuna.modularbot.util.InputStreamUtils;
-import dev.mayuna.modularbot.util.logging.ModularBotLogger;
+import enterprises.iwakura.amber.Amber;
 import enterprises.iwakura.sigewine.core.BeanDefinition;
 import enterprises.iwakura.sigewine.core.annotations.RomaritimeBean;
 import lombok.NonNull;
+import lombok.extern.log4j.Log4j2;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -29,12 +32,13 @@ import java.util.stream.Stream;
 import java.util.zip.ZipFile;
 
 @RomaritimeBean
+@Log4j2
 public final class DefaultModuleManager implements ModuleManager {
 
     public static final String MODULE_CONFIG_BEAN_NAME = "moduleConfig_%s";
-    private final static ModularBotLogger LOGGER = ModularBotLogger.create("ModuleManager");
 
     private final MayusJDAUtilities baseMayusJDAUtilities;
+    private final ModularBotIrminsul irminsul;
 
     private final List<ClassLoader> moduleClassLoaders = Collections.synchronizedList(new LinkedList<>());
     private List<Module> modules = createModuleList();
@@ -44,8 +48,12 @@ public final class DefaultModuleManager implements ModuleManager {
     private boolean stateEnabled = false;
     private boolean stateUnloaded = false;
 
-    public DefaultModuleManager(@RomaritimeBean(name = "modularBotMayusJDAUtilities") MayusJDAUtilities baseMayusJDAUtilities) {
+    public DefaultModuleManager(
+            @RomaritimeBean(name = "modularBotMayusJDAUtilities") MayusJDAUtilities baseMayusJDAUtilities,
+            ModularBotIrminsul irminsul
+    ) {
         this.baseMayusJDAUtilities = baseMayusJDAUtilities;
+        this.irminsul = irminsul;
     }
 
     /**
@@ -55,11 +63,6 @@ public final class DefaultModuleManager implements ModuleManager {
      */
     private List<Module> createModuleList() {
         return Collections.synchronizedList(new LinkedList<>());
-    }
-
-    @Override
-    public ModularBotLogger getLogger() {
-        return LOGGER;
     }
 
     /**
@@ -89,7 +92,6 @@ public final class DefaultModuleManager implements ModuleManager {
             module.setModuleStatus(ModuleStatus.NOT_LOADED);
             module.setModuleConfig(new ModuleConfig(module.getModuleInfo(), new JsonObject()));
             module.setModuleScheduler(new ModuleScheduler(module));
-            module.setLogger(ModularBotLogger.create(module.getModuleInfo().getName()));
 
             var mayusJdaUtilities = new MayusJDAUtilities();
             mayusJdaUtilities.copyFrom(baseMayusJDAUtilities);
@@ -107,30 +109,30 @@ public final class DefaultModuleManager implements ModuleManager {
 
         // Loading did not start yet
         if (!stateLoaded) {
-            LOGGER.info("Adding {} internal module(s) to memory to be loaded", listModules.size());
+            log.info("Adding {} internal module(s) to memory to be loaded", listModules.size());
             this.internalModules.addAll(listModules);
             return;
         }
 
         // Loading started, but not enabled -> load them
         if (!stateEnabled) {
-            LOGGER.info("Loading {} internal module(s) & adding them to memory to be enabled", listModules.size());
+            log.info("Loading {} internal module(s) & adding them to memory to be enabled", listModules.size());
             listModules.forEach(this::loadModule);
             return;
         }
 
         // Loading & enabling started -> enable them
-        LOGGER.info("Loading & enabling {} internal module(s) & adding them to memory", listModules.size());
+        log.info("Loading & enabling {} internal module(s) & adding them to memory", listModules.size());
         listModules.forEach(this::loadModule);
         listModules.forEach(this::enableModule);
     }
 
     @Override
     public boolean loadModules() {
-        LOGGER.mdebug("Loading modules...");
+        log.info("Loading modules...");
 
         if (!modules.isEmpty()) {
-            LOGGER.mdebug("Some modules are loaded - unloading them...");
+            log.warn("Some modules are loaded - unloading them...");
             unloadModules();
         }
 
@@ -140,11 +142,11 @@ public final class DefaultModuleManager implements ModuleManager {
             try {
                 Files.createDirectories(modulesDirectory);
             } catch (IOException exception) {
-                LOGGER.error("Failed to create modules directory!");
+                log.error("Failed to create modules directory!");
                 return false;
             }
 
-            LOGGER.mdebug("The modules directory was just created, there won't be any modules.");
+            log.warn("The modules directory was just created, there won't be any modules.");
             return true;
         }
 
@@ -156,12 +158,13 @@ public final class DefaultModuleManager implements ModuleManager {
                     .filter(path -> path.getFileName().toString().endsWith(".jar")) // Only jar files
                     .toList();
         } catch (IOException exception) {
-            LOGGER.error("Failed to list files in modules directory!", exception);
+            log.error("Failed to list files in modules directory!", exception);
             return false;
         }
 
+        List<Class<?>> irminsulEntities = new ArrayList<>();
+
         for (Path moduleFile : moduleFiles) {
-            LOGGER.mdebug("Loading module: {}", moduleFile.getFileName());
             Optional<Module> optionalModule = loadModuleFile(moduleFile);
 
             // Could not load module, error logged
@@ -173,12 +176,27 @@ public final class DefaultModuleManager implements ModuleManager {
 
             // Load the module
             loadModule(module);
+
+            // Collect any irminsul entities
+            if (module.getIrminsulEntities() != null) {
+                irminsulEntities.addAll(module.getIrminsulEntities());
+            }
         }
 
         // Loading any internal modules
-        LOGGER.mdebug("Loading {} internal modules...", internalModules.size());
-        internalModules.forEach(this::loadModule);
+        log.info("Loading {} internal modules...", internalModules.size());
+        internalModules.forEach(module -> {
+            loadModule(module);
+
+            // Collect any irminsul entities
+            if (module.getIrminsulEntities() != null) {
+                irminsulEntities.addAll(module.getIrminsulEntities());
+            }
+        });
         internalModules.clear();
+
+        log.info("Initializing {} Irminsul entities...", irminsulEntities.size());
+        irminsul.initialize(irminsulEntities.toArray(new Class[0]));
 
         stateLoaded = true;
         return true;
@@ -192,12 +210,25 @@ public final class DefaultModuleManager implements ModuleManager {
      * @return Optional of {@link Module}
      */
     private Optional<Module> loadModuleFile(Path moduleFile) {
+        log.info("Loading module: {}", moduleFile.getFileName());
         ModuleClassLoader moduleClassLoader;
 
+        log.info("Bootstrapping module with Amber...");
+        Amber amber = Amber.jarFiles(List.of(moduleFile), new ModuleAmberLogger());
+        List<Path> moduleJarDependencies = new ArrayList<>();
+        moduleJarDependencies.add(moduleFile);
+
         try {
-            moduleClassLoader = new ModuleClassLoader(moduleFile, DefaultModuleManager.class.getClassLoader(), moduleClassLoaders);
+            moduleJarDependencies.addAll(amber.bootstrap());
+        } catch (Exception exception) {
+            log.error("Failed to bootstrap module: {}", moduleFile.getFileName(), exception);
+            return Optional.empty();
+        }
+
+        try {
+            moduleClassLoader = new ModuleClassLoader(moduleJarDependencies, DefaultModuleManager.class.getClassLoader(), moduleClassLoaders);
         } catch (MalformedURLException exception) {
-            LOGGER.error("Failed to create class loader for module: {}", moduleFile.getFileName(), exception);
+            log.error("Failed to create class loader for module: {}", moduleFile.getFileName(), exception);
             return Optional.empty();
         }
 
@@ -205,7 +236,7 @@ public final class DefaultModuleManager implements ModuleManager {
             InputStream moduleInfoInputStream = InputStreamUtils.openFileAsInputStream(zipFile, ModularBotConstants.FILE_NAME_MODULE_INFO);
 
             if (moduleInfoInputStream == null) {
-                LOGGER.warn("Module {} does not contain module_info.json! However, it will be loaded in classpath.", moduleFile.getFileName());
+                log.warn("Module {} does not contain module_info.json! However, it will be loaded in classpath.", moduleFile.getFileName());
                 return Optional.empty();
             }
 
@@ -220,12 +251,12 @@ public final class DefaultModuleManager implements ModuleManager {
 
                 defaultConfig = JsonParser.parseString(defaultConfigFileContent).getAsJsonObject();
             } else {
-                LOGGER.warn("Module {} does not have default config.", moduleInfo.getName());
+                log.warn("Module {} does not have default config.", moduleInfo.getName());
                 defaultConfig = new JsonObject();
             }
 
             final var moduleConfig = new ModuleConfig(moduleInfo, defaultConfig);
-            LOGGER.info("Loading configuration for module {}...", moduleInfo.getName());
+            log.info("Loading configuration for module {}...", moduleInfo.getName());
             moduleConfig.copyDefaultsIfEmpty();
             moduleConfig.reload();
 
@@ -235,16 +266,16 @@ public final class DefaultModuleManager implements ModuleManager {
                 var mainClass = moduleClassLoader.loadClass(moduleInfo.getMainClass());
 
                 final var moduleConfigBeanName = MODULE_CONFIG_BEAN_NAME.formatted(moduleInfo.getName());
-                LOGGER.mdebug("Adding module config to bean as {}: {}", moduleConfigBeanName, moduleConfig);
+                log.debug("Adding module config to bean as {}: {}", moduleConfigBeanName, moduleConfig);
                 // FIXME: Better way to create bean definition
-                final var beanDefinition = new BeanDefinition(moduleConfigBeanName.formatted(moduleInfo.getName()), moduleConfig.getClass(), null);
+                final var beanDefinition = new BeanDefinition(moduleConfigBeanName, moduleConfig.getClass(), null);
                 ModularBot.getSigewine().getSingletonBeans().put(beanDefinition, moduleConfig);
 
                 final var modulePackagePath = Optional.ofNullable(moduleInfo.getSigewinePackagePath()).orElse(mainClass.getPackageName());
-                LOGGER.info("Module {} requires Sigewine, treating its package {} (class loader {})...", moduleInfo.getName(), modulePackagePath, mainClass.getClassLoader());
+                log.info("Module {} requires Sigewine, treating its package {} (class loader {})...", moduleInfo.getName(), modulePackagePath, mainClass.getClassLoader());
                 ModularBot.getSigewine().treatment(modulePackagePath, moduleClassLoader);
 
-                LOGGER.info("Syringing main class {} for module {}...", mainClass.getCanonicalName(), moduleInfo.getName());
+                log.info("Syringing main class {} for module {}...", mainClass.getCanonicalName(), moduleInfo.getName());
                 module = (Module) ModularBot.getSigewine().syringe(mainClass);
             } else {
                 module = (Module) moduleClassLoader.loadClass(moduleInfo.getMainClass()).getConstructor().newInstance();
@@ -254,7 +285,6 @@ public final class DefaultModuleManager implements ModuleManager {
             module.setModuleStatus(ModuleStatus.NOT_LOADED);
             module.setModuleConfig(moduleConfig);
             module.setModuleScheduler(new ModuleScheduler(module));
-            module.setLogger(ModularBotLogger.create(module.getModuleInfo().getName()));
 
             var mayusJdaUtilities = new MayusJDAUtilities();
             mayusJdaUtilities.copyFrom(baseMayusJDAUtilities);
@@ -270,13 +300,13 @@ public final class DefaultModuleManager implements ModuleManager {
 
             return Optional.of(module);
         } catch (IOException exception) {
-            LOGGER.error("Failed to read module: {}", moduleFile.getFileName(), exception);
+            log.error("Failed to read module: {}", moduleFile.getFileName(), exception);
         } catch (ClassNotFoundException exception) {
-            LOGGER.error("Could not find main class for module: {}", moduleFile.getFileName(), exception);
+            log.error("Could not find main class for module: {}", moduleFile.getFileName(), exception);
         } catch (InvocationTargetException | InstantiationException | IllegalAccessException | NoSuchMethodException exception) {
-            LOGGER.error("Could not create module instance for module: {} (does the main class have public no-args constructor?)", moduleFile.getFileName(), exception);
+            log.error("Could not create module instance for module: {} (does the main class have public no-args constructor?)", moduleFile.getFileName(), exception);
         } catch (Throwable exception) {
-            LOGGER.error("Failed to load module: {}", moduleFile.getFileName(), exception);
+            log.error("Failed to load module: {}", moduleFile.getFileName(), exception);
         }
 
         return Optional.empty();
@@ -287,17 +317,17 @@ public final class DefaultModuleManager implements ModuleManager {
         String moduleName = module.getModuleInfo().getName();
 
         if (module.getModuleStatus() != ModuleStatus.NOT_LOADED) {
-            LOGGER.warn("Tried loading module {}, which does not have status of NOT_LOADED!", moduleName);
+            log.warn("Tried loading module {}, which does not have status of NOT_LOADED!", moduleName);
             return;
         }
 
-        LOGGER.mdebug("Loading module {}...", moduleName);
+        log.info("Loading module {}...", moduleName);
         module.setModuleStatus(ModuleStatus.LOADING);
 
         try {
             module.onLoad();
         } catch (Exception exception) {
-            LOGGER.error("Exception occurred while loading module {}!", moduleName, exception);
+            log.error("Exception occurred while loading module {}!", moduleName, exception);
             module.setModuleStatus(ModuleStatus.FAILED);
 
             // Remove the module's class loader from the list of class loaders
@@ -307,14 +337,14 @@ public final class DefaultModuleManager implements ModuleManager {
             return;
         }
 
-        LOGGER.mdebug("Module {} loaded successfully.", moduleName);
+        log.info("Module {} loaded successfully.", moduleName);
         module.setModuleStatus(ModuleStatus.LOADED);
         modules.add(module);
     }
 
     @Override
     public void enableModules() {
-        LOGGER.mdebug("Enabling {} modules...", modules.size());
+        log.info("Enabling {} modules...", modules.size());
 
         modules.forEach(module -> {
             try {
@@ -324,12 +354,12 @@ public final class DefaultModuleManager implements ModuleManager {
                 String depend = Arrays.toString(module.getModuleInfo().getDepend());
                 String softDepend = Arrays.toString(module.getModuleInfo().getSoftDepend());
 
-                LOGGER.error("StackOverflowError occurred while loading module {}! It depends on {}, soft-depends on {}", moduleName, depend, softDepend);
+                log.error("StackOverflowError occurred while loading module {}! It depends on {}, soft-depends on {}", moduleName, depend, softDepend);
                 unloadModule(module);
             }
         });
 
-        LOGGER.mdebug("Unloading modules that failed to enable, if any...");
+        log.debug("Unloading modules that failed to enable, if any...");
         modules.forEach(module -> {
             if (module.getModuleStatus() != ModuleStatus.ENABLED) {
                 unloadModule(module);
@@ -337,7 +367,7 @@ public final class DefaultModuleManager implements ModuleManager {
         });
 
         stateEnabled = true;
-        LOGGER.info("Enabled {} modules successfully.", modules.size());
+        log.info("Enabled {} modules successfully.", modules.size());
     }
 
     @Override
@@ -353,7 +383,7 @@ public final class DefaultModuleManager implements ModuleManager {
             Optional<Module> optionalDependentModule = getModuleByName(dependentName);
 
             if (optionalDependentModule.isEmpty()) {
-                LOGGER.error("Module {} specified {} as dependent but the module is not loaded!", moduleInfo.getName(), dependentName);
+                log.error("Module {} specified {} as dependent but the module is not loaded!", moduleInfo.getName(), dependentName);
                 return;
             }
 
@@ -365,25 +395,25 @@ public final class DefaultModuleManager implements ModuleManager {
             Optional<Module> optionalDependentModule = getModuleByName(dependentModule);
 
             if (optionalDependentModule.isEmpty()) {
-                LOGGER.warn("Module {} specified {} as soft-dependent but the module is not loaded.", moduleInfo.getName(), dependentModule);
+                log.warn("Module {} specified {} as soft-dependent but the module is not loaded.", moduleInfo.getName(), dependentModule);
                 continue;
             }
 
             enableModule(optionalDependentModule.get());
         }
 
-        LOGGER.mdebug("Enabling module {}...", moduleInfo.getName());
+        log.info("Enabling module {}...", moduleInfo.getName());
         module.setModuleStatus(ModuleStatus.ENABLING);
 
         try {
             module.onEnable();
         } catch (Exception exception) {
-            LOGGER.error("Failed to enable module {}!", moduleInfo.getName(), exception);
+            log.error("Failed to enable module {}!", moduleInfo.getName(), exception);
             unloadModule(module);
             return;
         }
 
-        LOGGER.mdebug("Module {} enabled successfully.", moduleInfo.getName());
+        log.info("Module {} enabled successfully.", moduleInfo.getName());
         module.setModuleStatus(ModuleStatus.ENABLED);
     }
 
@@ -401,7 +431,7 @@ public final class DefaultModuleManager implements ModuleManager {
         oldModules.forEach(this::unloadModule);
 
         stateUnloaded = true;
-        LOGGER.success("Unloaded {} modules successfully.", oldModules.size());
+        log.info("Unloaded {} modules successfully.", oldModules.size());
     }
 
     @Override
@@ -409,15 +439,15 @@ public final class DefaultModuleManager implements ModuleManager {
         String moduleName = module.getModuleInfo().getName();
 
         switch (module.getModuleStatus()) {
-            case NOT_LOADED -> LOGGER.warn("Tried unloading module ({}) which is not loaded!", moduleName);
+            case NOT_LOADED -> log.warn("Tried unloading module ({}) which is not loaded!", moduleName);
             case LOADED, ENABLING, DISABLED -> {
-                LOGGER.mdebug("Unloading module {}...", moduleName);
+                log.info("Unloading module {}...", moduleName);
                 module.setModuleStatus(ModuleStatus.UNLOADING);
 
                 try {
                     module.onUnload();
                 } catch (Exception unloadException) {
-                    LOGGER.error("Exception occurred while unloading module {}!", moduleName, unloadException);
+                    log.error("Exception occurred while unloading module {}!", moduleName, unloadException);
                 }
 
                 modules.remove(module);
@@ -428,21 +458,21 @@ public final class DefaultModuleManager implements ModuleManager {
 
                 module.setModuleStatus(ModuleStatus.NOT_LOADED);
 
-                LOGGER.mdebug("Module {} unloaded successfully.", moduleName);
+                log.info("Module {} unloaded successfully.", moduleName);
             }
             case ENABLED -> {
-                LOGGER.mdebug("Disabling module {}...", moduleName);
+                log.info("Disabling module {}...", moduleName);
                 module.setModuleStatus(ModuleStatus.DISABLING);
 
                 try {
                     module.onDisable();
                     module.getModuleScheduler().cancelTasks();
                 } catch (Exception disableException) {
-                    LOGGER.error("Exception occurred while disabling module {}!", moduleName, disableException);
+                    log.error("Exception occurred while disabling module {}!", moduleName, disableException);
                 }
 
                 module.setModuleStatus(ModuleStatus.DISABLED);
-                LOGGER.mdebug("Module {} disabled successfully.", moduleName);
+                log.info("Module {} disabled successfully.", moduleName);
 
                 unloadModule(module);
             }

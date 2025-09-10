@@ -11,7 +11,7 @@ import lombok.Getter;
 @Getter
 public final class StorageSettings {
 
-    private StorageLogLevelSettings logLevel = StorageLogLevelSettings.FLOW;
+    private StorageLogLevelSettings logLevel = StorageLogLevelSettings.DEBUG;
     private boolean logOperations = false;
     private StorageTypeSettings storageType = StorageTypeSettings.SQL_LITE;
     private FolderStorageSettings folderStorageSettings;

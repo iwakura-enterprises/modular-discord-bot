@@ -1,16 +1,24 @@
+buildscript {
+    dependencies {
+        classpath files('libs/amber-plugin-1.0.0.jar')
+    }
+}
+
 plugins {
     id 'java'
     id 'java-library'
     id 'signing'
     id 'maven-publish'
     id "com.github.johnrengelman.shadow" version "8.1.1"
-    id "io.github.gradle-nexus.publish-plugin" version "1.1.0"
     id 'jacoco'
     id 'jacoco-report-aggregation'
+    id "tech.medivh.plugin.publisher" version "1.2.3"
 }
 
-group 'dev.mayuna'
-version '2.4.0'
+apply plugin: 'enterprises.iwakura.amber'
+
+group 'enterprises.iwakura'
+version '3.0.0'
 
 repositories {
     mavenCentral()
@@ -24,37 +32,48 @@ repositories {
 }
 
 dependencies {
-    // JDA
-    implementation 'net.dv8tion:JDA:5.3.2'
-
-    // JDA Chewutils
-    implementation 'pw.chew:jda-chewtils:2.0-SNAPSHOT'
+    // JDA, Chewutils
+    amber 'net.dv8tion:JDA:5.6.1'
+    amber 'pw.chew:jda-chewtils:2.0-SNAPSHOT'
 
     // Personal libraries
-    implementation 'dev.mayuna:mayus-jda-utilities:3.5.0'
+    amber 'dev.mayuna:mayus-jda-utilities:3.5.0'
+    amber 'dev.mayuna:mayus-library:3.1'
+    amber 'dev.mayuna:mayus-json-utilities:2.1'
+    amber 'dev.mayuna:pumpk1n:2.2.1'
 
-    implementation 'dev.mayuna:mayus-library:3.1'
-    implementation 'dev.mayuna:mayus-json-utilities:2.1'
-    implementation 'dev.mayuna:pumpk1n:2.2.1'
-    implementation 'dev.mayuna:console-parallax:1.0.1'
-    implementation 'enterprises.iwakura:sigewine-core:2.0.3'
-
-    // SLF4J
-    implementation 'org.apache.logging.log4j:log4j-slf4j2-impl:2.23.1'
-    implementation 'org.apache.logging.log4j:log4j-api:2.23.1'
-    implementation 'org.apache.logging.log4j:log4j-core:2.23.1'
+    amber 'enterprises.iwakura:ganyu:1.0.0'
+    amber 'enterprises.iwakura:sigewine-core:2.2.1'
+    amber 'enterprises.iwakura:sigewine-aop:2.2.1'
+    amber 'enterprises.iwakura:sigewine-aop-sentry:2.2.1'
+    implementation 'enterprises.iwakura:amber-core:1.0.0'
+    amber 'enterprises.iwakura:irminsul:0.0.3'
 
     // GSON
-    implementation 'com.google.code.gson:gson:2.11.0'
+    amber 'com.google.code.gson:gson:2.13.1'
 
-    // SQLite
-    implementation 'org.xerial:sqlite-jdbc:3.46.0.0'
+    // Guava
+    amber 'com.google.guava:guava:33.4.8-jre'
+
+    // Database - Hibernate, SQLite, MySQL, PostgreSQL
+    amber 'org.postgresql:postgresql:42.7.6'
+    compileOnly platform("org.hibernate.orm:hibernate-platform:7.0.0.CR1")
+    amber "org.hibernate.orm:hibernate-core"
+    amber 'org.hibernate.orm:hibernate-processor:7.0.0.CR1'
+    annotationProcessor 'org.hibernate.orm:hibernate-processor:7.0.0.CR1'
+    amber "org.hibernate.orm:hibernate-hikaricp"
+    amber "jakarta.transaction:jakarta.transaction-api"
+    amber 'com.fasterxml.jackson.core:jackson-databind:2.15.3'
+    amber 'org.xerial:sqlite-jdbc:3.46.0.0'
+    amber 'com.mysql:mysql-connector-j:9.4.0'
 
     // HikariCP
-    implementation 'com.zaxxer:HikariCP:5.1.0'
+    amber 'com.zaxxer:HikariCP:5.1.0'
 
-    // MySQL
-    implementation 'com.mysql:mysql-connector-j:8.4.0'
+    // SLF4J
+    amber 'org.apache.logging.log4j:log4j-slf4j2-impl:2.23.1'
+    amber 'org.apache.logging.log4j:log4j-api:2.23.1'
+    amber 'org.apache.logging.log4j:log4j-core:2.23.1'
 
     // Lombok
     compileOnly 'org.projectlombok:lombok:1.18.+'
@@ -70,16 +89,56 @@ dependencies {
 // == Quick tasks == //
 
 task publishCloseAndRelease() {
-    dependsOn 'publishToSonatype'
-    dependsOn 'closeAndReleaseSonatypeStagingRepository'
+    dependsOn 'cleanBuildMedivhMavenRepo'
+    dependsOn 'uploadToSonatype'
+    dependsOn 'publishDeployment'
 }
 
 shadowJar {
     archiveFileName = "modular-discord-bot.jar"
 
     manifest {
-        attributes 'Main-Class': 'dev.mayuna.modularbot.Main'
+        attributes 'Main-Class': 'dev.mayuna.modularbot.BootstrapMain'
     }
+
+    archiveVersion.set(version)
+    archiveClassifier.set('all')
+    destinationDirectory = file("$buildDir/libs")
+}
+
+// == Maven publishing == //
+
+medivhPublisher {
+    groupId = project.group.toString()
+    artifactId = project.name
+    version = project.version.toString()
+    pom {
+        name = "modular-discord-bot"
+        description = "Modular Discord Bot"
+        url = "https://github.com/iwakura-enterprises/modular-discord-bot"
+        licenses {
+            license {
+                name = "The MIT License"
+                url = "https://opensource.org/license/mit"
+            }
+        }
+        developers {
+            developer {
+                id = "mayuna"
+                name = "Marek Lof"
+                email = "uwulilmayu@gmail.com"
+            }
+        }
+        scm {
+            connection = "scm:git:"
+            url = "https://github.com/iwakura-enterprises/modular-discord-bot.git"
+        }
+    }
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
 }
 
 test {
@@ -98,87 +157,20 @@ tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
 }
 
-// == Maven publishing == //
+task javadocJar(type: Jar) {
+    from javadoc
+    archiveClassifier.set('javadoc')
+}
 
-publishing {
-
-    publications {
-        shadow(MavenPublication) {
-            groupId = 'dev.mayuna'
-            artifactId = 'modular-discord-bot'
-            version = getVersion()
-            from components.java
-
-            pom {
-                name = 'ModularDiscordBot'
-                description = 'Modular Discord Bot'
-                url = 'https://github.com/lilmayu/ModularDiscordBot'
-
-                scm {
-                    connection = 'scm:https://github.com/lilmayu/ModularDiscordBot'
-                    developerConnection = 'scm:git:https://github.com/lilmayu/ModularDiscordBot.git'
-                    url = 'https://github.com/lilmayu/ModularDiscordBot'
-                }
-
-                licenses {
-                    license {
-                        name = 'GNU General Public License v3.0'
-                        url = 'https://www.gnu.org/licenses/gpl-3.0.html'
-                    }
-                }
-
-                developers {
-                    developer {
-                        id = 'mayuna'
-                        name = 'Marek Lof'
-                        email = 'uwulilmayu@gmail.com'
-                    }
-                }
-            }
-        }
-    }
-
-    publishing {
-        repositories {
-            maven {
-                credentials {
-                    username = project.properties['ossrhUsername'] ?: System.getenv('ossrhUsername')
-                    password = project.properties['ossrhPassword'] ?: System.getenv('ossrhPassword')
-                }
-
-                url = "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/"
-            }
-        }
-    }
+task sourcesJar(type: Jar) {
+    from sourceSets.main.allSource
+    archiveClassifier.set('sources')
 }
 
 signing {
-    def signingKey = findProperty("signingKey")
-    def signingPassword = findProperty("signingPassword")
-    useInMemoryPgpKeys(signingKey, signingPassword)
-    sign publishing.publications.shadow
-}
-
-nexusPublishing {
-    repositories {
-        sonatype {
-            nexusUrl.set(uri("https://s01.oss.sonatype.org/service/local/"))
-            snapshotRepositoryUrl.set(uri("https://s01.oss.sonatype.org/content/repositories/snapshots/"))
-            username = project.properties['ossrhUsername'] ?: System.getenv('ossrhUsername')
-            password = project.properties['ossrhPassword'] ?: System.getenv('ossrhPassword')
-        }
-    }
-}
-
-java {
-    withJavadocJar()
-    withSourcesJar()
-}
-
-shadowJar.dependsOn javadocJar
-shadowJar.dependsOn sourcesJar
-shadowJar.dependsOn jar
-
-components.java.withVariantsFromConfiguration(configurations.shadowRuntimeElements) {
-    skip()
+    useInMemoryPgpKeys(
+            System.getenv("GPG_KEY_ID"),
+            System.getenv("GPG_PRIVATE_KEY"),
+            System.getenv("GPG_PASSWORD")
+    )
 }

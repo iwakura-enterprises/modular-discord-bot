@@ -4,8 +4,9 @@ import com.google.gson.Gson;
 import dev.mayuna.mayusjsonutils.MayuJson;
 import dev.mayuna.mayusjsonutils.ObjectLoader;
 import dev.mayuna.modularbot.ModularBotConstants;
-import dev.mayuna.modularbot.util.logging.ModularBotLogger;
+import enterprises.iwakura.irminsul.DatabaseServiceConfiguration;
 import lombok.Getter;
+import lombok.extern.log4j.Log4j2;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 
 import java.io.IOException;
@@ -18,14 +19,15 @@ import java.util.List;
  */
 @SuppressWarnings("FieldMayBeFinal")
 @Getter
+@Log4j2
 public final class ModularBotConfig {
 
-    private static final ModularBotLogger LOGGER = ModularBotLogger.create(ModularBotConfig.class);
     private static final Gson GSON = MayuJson.DEFAULT_GSON;
 
     // Settings
     private Discord discord = new Discord();
     private StorageSettings storageSettings = new StorageSettings("modular-bot");
+    private Irminsul irminsul = new Irminsul();
 
     /**
      * Loads the configuration from the config file
@@ -36,7 +38,7 @@ public final class ModularBotConfig {
         try {
             return ObjectLoader.loadOrCreateFrom(ModularBotConfig.class, ModularBotConstants.PATH_MODULAR_BOT_CONFIG, StandardCharsets.UTF_8, GSON);
         } catch (IOException exception) {
-            LOGGER.error("Failed to load config!", exception);
+            log.error("Failed to load config!", exception);
             return null;
         }
     }
@@ -48,7 +50,7 @@ public final class ModularBotConfig {
         try {
             ObjectLoader.saveTo(this, ModularBotConstants.PATH_MODULAR_BOT_CONFIG, StandardCharsets.UTF_8, GSON);
         } catch (IOException exception) {
-            LOGGER.error("Failed to save config!", exception);
+            log.error("Failed to save config!", exception);
         }
     }
 
@@ -66,7 +68,6 @@ public final class ModularBotConfig {
 
         @Getter
         public static final class ShardManager {
-            // TODO
 
             private boolean light = true;
             private List<GatewayIntent> gatewayIntents = new LinkedList<>();
@@ -82,5 +83,12 @@ public final class ModularBotConfig {
             private boolean enabled = true;
             private long cycleIntervalMillis = 10000;
         }
+    }
+
+    @Getter
+    public static final class Irminsul {
+
+        private DatabaseServiceConfiguration database = new DatabaseServiceConfiguration();
+
     }
 }

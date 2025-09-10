@@ -1,18 +1,19 @@
 package dev.mayuna.modularbot.base;
 
 import com.jagrosh.jdautilities.command.CommandClientBuilder;
-import dev.mayuna.consoleparallax.ConsoleParallax;
 import dev.mayuna.mayusjdautils.MayusJDAUtilities;
 import dev.mayuna.modularbot.concurrent.ModuleScheduler;
-import dev.mayuna.modularbot.util.logging.ModularBotLogger;
 import dev.mayuna.modularbot.objects.ModuleConfig;
 import dev.mayuna.modularbot.objects.ModuleInfo;
 import dev.mayuna.modularbot.objects.ModuleStatus;
 import dev.mayuna.modularbot.objects.activity.ModuleActivities;
+import enterprises.iwakura.ganyu.Ganyu;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
 import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder;
+
+import java.util.List;
 
 @Getter
 @Setter
@@ -23,9 +24,9 @@ public abstract class Module {
     private ModuleInfo moduleInfo;
     private ModuleStatus moduleStatus;
     private ModuleConfig moduleConfig;
-    private ModularBotLogger logger;
     private MayusJDAUtilities mayusJDAUtilities;
     private ModuleScheduler moduleScheduler;
+    private List<Class<?>> irminsulEntities;
 
     /**
      * This method is called when the module is loaded
@@ -72,9 +73,9 @@ public abstract class Module {
     /**
      * This method is called when Modular Bot is registering console commands
      *
-     * @param consoleParallax Non-null {@link ConsoleParallax}
+     * @param ganyu Non-null {@link Ganyu}
      */
-    public void onConsoleCommandRegistration(@NonNull ConsoleParallax consoleParallax) {
+    public void onConsoleCommandRegistration(@NonNull Ganyu ganyu) {
     }
 
     /**

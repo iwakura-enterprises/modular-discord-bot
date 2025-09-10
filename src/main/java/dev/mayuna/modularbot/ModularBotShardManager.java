@@ -6,11 +6,10 @@ import dev.mayuna.modularbot.config.ModularBotConfig;
 import dev.mayuna.modularbot.managers.DefaultModuleManager;
 import dev.mayuna.modularbot.objects.ModuleStatus;
 import dev.mayuna.modularbot.objects.activity.ModuleActivity;
-import dev.mayuna.modularbot.util.logging.ModularBotLogger;
 import enterprises.iwakura.sigewine.core.annotations.RomaritimeBean;
 import lombok.Getter;
-import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder;
 import net.dv8tion.jda.api.sharding.ShardManager;
 
@@ -19,12 +18,12 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
+@Log4j2
 @RomaritimeBean
 @RequiredArgsConstructor
 public final class ModularBotShardManager {
 
     public static final int INVALID_SHARD_ID = -1;
-    private final static ModularBotLogger LOGGER = ModularBotLogger.create(ModularBotShardManager.class);
 
     private final ModularBotConfig modularBotConfig;
     private final DefaultModuleManager moduleManager;
@@ -43,7 +42,7 @@ public final class ModularBotShardManager {
     public boolean init() {
         final var discordSettings = modularBotConfig.getDiscord();
 
-        LOGGER.mdebug("Creating CommandClientBuilder...");
+        log.info("Creating CommandClientBuilder...");
         commandClientBuilder = new CommandClientBuilder()
                 .setOwnerId(discordSettings.getOwnerId())
                 .setActivity(null);
@@ -51,23 +50,23 @@ public final class ModularBotShardManager {
         try {
             final ModularBotConfig.Discord.ShardManager shardManagerSettings = discordSettings.getShardManager();
             if (discordSettings.getShardManager().isLight()) {
-                LOGGER.mdebug("Creating light DefaultShardManagerBuilder...");
+                log.info("Creating light DefaultShardManagerBuilder...");
                 shardManagerBuilder = DefaultShardManagerBuilder.createLight(discordSettings.getToken(), shardManagerSettings.getGatewayIntents());
             } else {
-                LOGGER.mdebug("Creating default DefaultShardManagerBuilder...");
+                log.info("Creating default DefaultShardManagerBuilder...");
                 shardManagerBuilder = DefaultShardManagerBuilder.createDefault(discordSettings.getToken(), shardManagerSettings.getGatewayIntents());
             }
 
-            LOGGER.mdebug("Gateway intents: {}", discordSettings.getShardManager().getGatewayIntents().toString());
+            log.info("Gateway intents: {}", discordSettings.getShardManager().getGatewayIntents().toString());
 
             if (!shardManagerSettings.getShardIds().isEmpty()) {
-                LOGGER.mdebug("Using these shard IDs: {}", shardManagerSettings.getShardIds().toString());
+                log.info("Using these shard IDs: {}", shardManagerSettings.getShardIds().toString());
                 shardManagerBuilder.setShards(shardManagerSettings.getShardIds());
                 return true;
             }
 
             if (shardManagerSettings.getMinShardId() != INVALID_SHARD_ID && shardManagerSettings.getMaxShardId() != INVALID_SHARD_ID) {
-                LOGGER.mdebug("Using shard IDs from {} to {}", shardManagerSettings.getMinShardId(), shardManagerSettings.getMaxShardId());
+                log.info("Using shard IDs from {} to {}", shardManagerSettings.getMinShardId(), shardManagerSettings.getMaxShardId());
                 shardManagerBuilder.setShards(shardManagerSettings.getMinShardId(), shardManagerSettings.getMaxShardId());
                 return true;
             }
@@ -75,17 +74,17 @@ public final class ModularBotShardManager {
             int totalShards = shardManagerSettings.getTotalShards();
 
             if (totalShards == INVALID_SHARD_ID) {
-                LOGGER.mdebug("Using recommended amount of shards by Discord");
+                log.info("Using recommended amount of shards by Discord");
                 shardManagerBuilder.setShardsTotal(INVALID_SHARD_ID);
                 return true;
             }
 
-            LOGGER.mdebug("Using total of {} shard(s)", shardManagerSettings.getTotalShards());
+            log.info("Using total of {} shard(s)", shardManagerSettings.getTotalShards());
             shardManagerBuilder.setShardsTotal(shardManagerSettings.getTotalShards());
 
             return true;
         } catch (Exception exception) {
-            LOGGER.error("Failed to create Shard Manager!", exception);
+            log.error("Failed to create Shard Manager!", exception);
             return false;
         }
     }
@@ -97,24 +96,24 @@ public final class ModularBotShardManager {
      */
     public boolean finish() {
         if (shardManagerBuilder == null) {
-            LOGGER.warn("Cannot build twice.");
+            log.warn("Cannot build twice.");
             return false;
         }
 
-        LOGGER.mdebug("Building CommandClientBuilder...");
+        log.info("Building CommandClientBuilder...");
         shardManagerBuilder.addEventListeners(commandClientBuilder.build());
 
-        LOGGER.mdebug("Registering InteractiveListener...");
+        log.info("Registering InteractiveListener...");
         shardManagerBuilder.addEventListeners(new InteractiveListener());
 
-        LOGGER.mdebug("Building ShardManager...");
+        log.info("Building ShardManager...");
 
         try {
             this.shardManager = shardManagerBuilder.build(false);
             this.shardManagerBuilder = null;
             return true;
         } catch (Exception exception) {
-            LOGGER.error("Could not build ShardManager!", exception);
+            log.error("Could not build ShardManager!", exception);
             return false;
         }
     }
@@ -125,7 +124,7 @@ public final class ModularBotShardManager {
      */
     public boolean connect() {
         if (connected) {
-            LOGGER.warn("Cannot connect twice.");
+            log.warn("Cannot connect twice.");
             return false;
         }
 
@@ -133,10 +132,10 @@ public final class ModularBotShardManager {
 
         try {
             this.shardManager.login();
-            LOGGER.success("Connected to Discord!");
+            log.info("Connected to Discord!");
             return true;
         } catch (Exception exception) {
-            LOGGER.error("Could not connect to Discord!", exception);
+            log.error("Could not connect to Discord!", exception);
             return false;
         }
     }
@@ -148,17 +147,18 @@ public final class ModularBotShardManager {
         ModularBotConfig.Discord.PresenceActivityCycle presenceActivityCycle = modularBotConfig.getDiscord().getPresenceActivityCycle();
 
         if (!presenceActivityCycle.isEnabled()) {
-            LOGGER.warn("Presence Activity Cycle is disabled, skipping.");
+            log.warn("Presence Activity Cycle is disabled, skipping.");
             return;
         }
 
         long intervalMillis = presenceActivityCycle.getCycleIntervalMillis();
 
         if (intervalMillis < 10000) {
-            LOGGER.error("Presence Activity Cycle interval must be higher than or equal to 10000ms!");
+            log.error("Presence Activity Cycle interval must be higher than or equal to 10000ms!");
             return;
         }
 
+        //@formatter:off
         presenceActivityUpdaterTimer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
@@ -191,15 +191,16 @@ public final class ModularBotShardManager {
                     try {
                         jda.getPresence().setActivity(moduleActivity.getOnActivityRefresh().apply(jda));
                     } catch (Exception exception) {
-                        LOGGER.error("Failed to set activity from module {} with activity name of {} on shard ID {}",
-                                     moduleActivity.getModule().getModuleInfo().getName(),
-                                     moduleActivity.getName(),
-                                     jda.getShardInfo().getShardId()
+                        log.error("Failed to set activity from module {} with activity name of {} on shard ID {}",
+                            moduleActivity.getModule().getModuleInfo().getName(),
+                            moduleActivity.getName(),
+                            jda.getShardInfo().getShardId()
                         );
                     }
                 });
             }
         }, 0, intervalMillis);
+        //@formatter:on
     }
 
     /**

@@ -1,6 +1,5 @@
 package dev.mayuna.modularbot.config.storage;
 
-import dev.mayuna.modularbot.util.logging.ModularBotLogger;
 import lombok.Getter;
 import org.apache.logging.log4j.Level;
 
@@ -14,9 +13,7 @@ public enum StorageLogLevelSettings {
     TRACE(Level.TRACE),
     WARN(Level.WARN),
     ERROR(Level.ERROR),
-    FATAL(Level.FATAL),
-    MDEBUG(ModularBotLogger.MDEBUG),
-    FLOW(ModularBotLogger.FLOW);
+    FATAL(Level.FATAL);
 
     private final Level log4jLevel;
 
