@@ -43,7 +43,9 @@ dependencies {
     amber 'dev.mayuna:pumpk1n:2.2.1'
 
     amber 'enterprises.iwakura:ganyu:1.0.0'
-    amber 'enterprises.iwakura:keqing:1.0.0'
+    amber 'enterprises.iwakura:keqing-core:1.0.0'
+    amber 'enterprises.iwakura:keqing-gson:1.0.0'
+    amber 'enterprises.iwakura:keqing-snakeyaml:1.0.0'
     amber 'enterprises.iwakura:sigewine-core:2.2.1'
     amber 'enterprises.iwakura:sigewine-aop:2.2.1'
     amber 'enterprises.iwakura:sigewine-aop-sentry:2.2.1'
