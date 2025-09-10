@@ -195,8 +195,11 @@ public final class DefaultModuleManager implements ModuleManager {
         });
         internalModules.clear();
 
-        log.info("Initializing {} Irminsul entities...", irminsulEntities.size());
-        irminsul.initialize(irminsulEntities.toArray(new Class[0]));
+        if (!irminsulEntities.isEmpty()) {
+            log.info("Initializing {} Irminsul entities...", irminsulEntities.size());
+            irminsul.initialize(irminsulEntities.toArray(new Class[0]));
+        }
+
 
         stateLoaded = true;
         return true;
