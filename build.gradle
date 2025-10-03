@@ -13,7 +13,7 @@ plugins {
 apply plugin: 'enterprises.iwakura.amber'
 
 group 'enterprises.iwakura'
-version '3.0.0'
+version '3.1.0'
 
 repositories {
     mavenCentral()
@@ -35,7 +35,6 @@ dependencies {
     amber 'dev.mayuna:mayus-jda-utilities:3.5.0'
     amber 'dev.mayuna:mayus-library:3.1'
     amber 'dev.mayuna:mayus-json-utilities:2.1'
-    amber 'dev.mayuna:pumpk1n:2.2.1'
 
     amber 'enterprises.iwakura:ganyu:1.0.0'
     amber 'enterprises.iwakura:keqing-core:1.1.0'
@@ -45,7 +44,7 @@ dependencies {
     amber 'enterprises.iwakura:sigewine-aop:2.2.1'
     amber 'enterprises.iwakura:sigewine-aop-sentry:2.2.1'
     implementation 'enterprises.iwakura:amber-core:1.0.1'
-    amber 'enterprises.iwakura:irminsul:0.0.3'
+    amber 'enterprises.iwakura:irminsul:0.1.0'
 
     // GSON
     amber 'com.google.code.gson:gson:2.13.1'
