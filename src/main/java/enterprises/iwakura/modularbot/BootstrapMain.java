@@ -14,6 +14,6 @@ public class BootstrapMain {
                 //.exitCodeAfterDownload(-500)
                 .build()
         );
-        Main.main(args);
+        ModularBotMain.main(args);
     }
 }

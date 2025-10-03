@@ -2,7 +2,6 @@ package enterprises.iwakura.modularbot.managers;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import dev.mayuna.mayusjdautils.MayusJDAUtilities;
 import enterprises.iwakura.modularbot.ModularBot;
 import enterprises.iwakura.modularbot.ModularBotConstants;
 import enterprises.iwakura.modularbot.amber.ModuleAmberLogger;
@@ -37,7 +36,6 @@ public final class DefaultModuleManager implements ModuleManager {
 
     public static final String MODULE_CONFIG_BEAN_NAME = "moduleConfig_%s";
 
-    private final MayusJDAUtilities baseMayusJDAUtilities;
     private final ModularBotIrminsul irminsul;
 
     private final List<ClassLoader> moduleClassLoaders = Collections.synchronizedList(new LinkedList<>());
@@ -48,11 +46,7 @@ public final class DefaultModuleManager implements ModuleManager {
     private boolean stateEnabled = false;
     private boolean stateUnloaded = false;
 
-    public DefaultModuleManager(
-            @RomaritimeBean(name = "modularBotMayusJDAUtilities") MayusJDAUtilities baseMayusJDAUtilities,
-            ModularBotIrminsul irminsul
-    ) {
-        this.baseMayusJDAUtilities = baseMayusJDAUtilities;
+    public DefaultModuleManager(ModularBotIrminsul irminsul) {
         this.irminsul = irminsul;
     }
 
@@ -92,10 +86,6 @@ public final class DefaultModuleManager implements ModuleManager {
             module.setModuleStatus(ModuleStatus.NOT_LOADED);
             module.setModuleConfig(new ModuleConfig(module.getModuleInfo(), new JsonObject()));
             module.setModuleScheduler(new ModuleScheduler(module));
-
-            var mayusJdaUtilities = new MayusJDAUtilities();
-            mayusJdaUtilities.copyFrom(baseMayusJDAUtilities);
-            module.setMayusJDAUtilities(mayusJdaUtilities);
 
             // Add the module's class loader to the list of class loaders
             synchronized (moduleClassLoaders) {
@@ -288,10 +278,6 @@ public final class DefaultModuleManager implements ModuleManager {
             module.setModuleStatus(ModuleStatus.NOT_LOADED);
             module.setModuleConfig(moduleConfig);
             module.setModuleScheduler(new ModuleScheduler(module));
-
-            var mayusJdaUtilities = new MayusJDAUtilities();
-            mayusJdaUtilities.copyFrom(baseMayusJDAUtilities);
-            module.setMayusJDAUtilities(mayusJdaUtilities);
 
             // Add the module's class loader to the list of class loaders
             synchronized (moduleClassLoaders) {

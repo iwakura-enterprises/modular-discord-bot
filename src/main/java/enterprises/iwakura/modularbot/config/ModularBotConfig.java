@@ -26,7 +26,6 @@ public final class ModularBotConfig {
 
     // Settings
     private Discord discord = new Discord();
-    private StorageSettings storageSettings = new StorageSettings("modular-bot");
     private Irminsul irminsul = new Irminsul();
 
     /**

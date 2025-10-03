@@ -1,11 +1,9 @@
 package enterprises.iwakura.modularbot;
 
-import dev.mayuna.mayusjdautils.MayusJDAUtilities;
 import dev.mayuna.mayuslibrary.exceptionreporting.UncaughtExceptionReporter;
 import enterprises.iwakura.modularbot.base.Module;
 import enterprises.iwakura.modularbot.config.ModularBotConfig;
 import enterprises.iwakura.modularbot.managers.DefaultModuleManager;
-import enterprises.iwakura.modularbot.managers.ModularBotDataManager;
 import enterprises.iwakura.ganyu.Ganyu;
 import enterprises.iwakura.sigewine.core.Sigewine;
 import enterprises.iwakura.sigewine.core.SigewineOptions;
@@ -25,33 +23,38 @@ import java.util.List;
 public final class ModularBot {
 
     private static final @Getter Sigewine sigewine = new Sigewine(SigewineOptions.builder().build());
+    private static ModularBot instance;
 
     private final List<Module> internalModules = new ArrayList<>();
 
     private final Ganyu ganyu;
-    private final ModularBotDataManager modularBotDataManager;
     private final ModularBotShardManager modularBotShardManager;
     private final ModularBotConfig config;
     private final DefaultModuleManager moduleManager;
-    private final MayusJDAUtilities baseMayusJDAUtilities;
 
     private boolean running;
     private boolean stopping;
 
     public ModularBot(
             Ganyu ganyu,
-            ModularBotDataManager modularBotDataManager,
             ModularBotShardManager modularBotShardManager,
             ModularBotConfig config,
-            DefaultModuleManager moduleManager,
-            @RomaritimeBean(name = "modularBotMayusJDAUtilities")
-            MayusJDAUtilities baseMayusJDAUtilities) {
+            DefaultModuleManager moduleManager) {
         this.ganyu = ganyu;
-        this.modularBotDataManager = modularBotDataManager;
         this.modularBotShardManager = modularBotShardManager;
         this.config = config;
         this.moduleManager = moduleManager;
-        this.baseMayusJDAUtilities = baseMayusJDAUtilities;
+
+        instance = this;
+    }
+
+    /**
+     * Returns the singleton instance of ModularBot
+     *
+     * @return the singleton instance of ModularBot
+     */
+    public static ModularBot get() {
+        return instance;
     }
 
     public void start(String[] args) {
@@ -86,7 +89,7 @@ public final class ModularBot {
         log.info("Loading...");
         final long startMillis = System.currentTimeMillis();
 
-        log.info("Phase 1/6 - Loading core...");
+        log.info("Phase 1/5 - Loading core...");
 
         log.info("Checking configuration");
         checkConfiguration();
@@ -100,16 +103,13 @@ public final class ModularBot {
         log.info("Preparing ModuleManager");
         prepareModuleManager();
 
-        log.info("Phase 2/6 - Loading modules...");
+        log.info("Phase 2/5 - Loading modules...");
         loadModules();
 
-        log.info("Phase 3/6 - Loading DataManager...");
-        loadDataManager();
-
-        log.info("Phase 4/6 - Enabling modules...");
+        log.info("Phase 3/5 - Enabling modules...");
         enableModules();
 
-        log.info("Phase 5/6 - Preparing JDA...");
+        log.info("Phase 4/5 - Preparing JDA...");
 
         log.info("Creating ModularBotShardManager...");
         createModularBotShardManager();
@@ -120,7 +120,7 @@ public final class ModularBot {
         log.info("Finishing ModularBotShardManager...");
         finishModularBotShardManager();
 
-        log.info("Phase 6/6 - Connecting to Discord...");
+        log.info("Phase 5/5 - Connecting to Discord...");
         connectToDiscord();
 
         log.info("Successfully started ModularDiscordBot (took {}ms)", (System.currentTimeMillis() - startMillis));
@@ -182,17 +182,6 @@ public final class ModularBot {
         if (!moduleManager.loadModules()) {
             shutdown();
         }
-    }
-
-    /**
-     * Loads DataManager
-     */
-    private void loadDataManager() {
-        log.info("Preparing DataManager...");
-        modularBotDataManager.prepareStorage();
-
-        log.info("Preparing GlobalDataHolder...");
-        modularBotDataManager.getGlobalDataHolder();
     }
 
     /**

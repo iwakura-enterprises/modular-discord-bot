@@ -57,7 +57,7 @@ public final class ModularBotShardManager {
                 shardManagerBuilder = DefaultShardManagerBuilder.createDefault(discordSettings.getToken(), shardManagerSettings.getGatewayIntents());
             }
 
-            log.info("Gateway intents: {}", discordSettings.getShardManager().getGatewayIntents().toString());
+            log.info("Modular Bot's config Gateway intents: {}", discordSettings.getShardManager().getGatewayIntents().toString());
 
             if (!shardManagerSettings.getShardIds().isEmpty()) {
                 log.info("Using these shard IDs: {}", shardManagerSettings.getShardIds().toString());
@@ -96,7 +96,7 @@ public final class ModularBotShardManager {
      */
     public boolean finish() {
         if (shardManagerBuilder == null) {
-            log.warn("Cannot build twice.");
+            log.warn("Cannot build shard manager twice.");
             return false;
         }
 

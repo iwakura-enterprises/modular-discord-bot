@@ -3,7 +3,7 @@ package enterprises.iwakura.modularbot;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
-public final class Main {
+public final class ModularBotMain {
 
     private static ModularBot modularBot;
 
@@ -12,7 +12,7 @@ public final class Main {
 
         log.info("Initializing Sigewine...");
         final var sigewine = ModularBot.getSigewine();
-        sigewine.treatment(Main.class);
+        sigewine.treatment(ModularBotMain.class);
         log.info("Sigewine initialized with {} beans", ModularBot.getSigewine().getSingletonBeans().size());
 
         log.info("Getting ModularBot bean...");

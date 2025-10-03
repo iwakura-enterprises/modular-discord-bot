@@ -1,7 +1,6 @@
 package enterprises.iwakura.modularbot.base;
 
 import com.jagrosh.jdautilities.command.CommandClientBuilder;
-import dev.mayuna.mayusjdautils.MayusJDAUtilities;
 import enterprises.iwakura.modularbot.concurrent.ModuleScheduler;
 import enterprises.iwakura.modularbot.objects.ModuleConfig;
 import enterprises.iwakura.modularbot.objects.ModuleInfo;
@@ -24,7 +23,6 @@ public abstract class Module {
     private ModuleInfo moduleInfo;
     private ModuleStatus moduleStatus;
     private ModuleConfig moduleConfig;
-    private MayusJDAUtilities mayusJDAUtilities;
     private ModuleScheduler moduleScheduler;
     private List<Class<?>> irminsulEntities;
 
