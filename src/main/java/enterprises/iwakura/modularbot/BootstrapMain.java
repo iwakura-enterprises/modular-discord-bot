@@ -12,6 +12,7 @@ public class BootstrapMain {
         Amber amber = Amber.classLoader();
         amber.bootstrap(BootstrapOptions.builder()
                 .exitCodeAfterDownload(-5)
+                .exitMessageAfterDownload("Please, restart the application.")
                 .build()
         );
         ModularBotMain.main(args);
