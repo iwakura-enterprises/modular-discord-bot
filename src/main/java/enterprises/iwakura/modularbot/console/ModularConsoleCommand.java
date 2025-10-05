@@ -28,7 +28,7 @@ public final class ModularConsoleCommand implements GanyuCommand {
     public void showAllModules() {
         var modularBot = ModularBot.getSigewine().syringe(ModularBot.class);
         ModuleManager moduleManager = modularBot.getModuleManager();
-        List<Module> modules = moduleManager.getModules();
+        List<Module<?>> modules = moduleManager.getModules();
 
         log.info("== Modules - {} ==", modules.size());
         modules.forEach(module -> {

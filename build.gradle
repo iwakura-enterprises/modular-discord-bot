@@ -37,17 +37,18 @@ dependencies {
     amber 'dev.mayuna:mayus-json-utilities:2.1'
 
     amber 'enterprises.iwakura:ganyu:1.0.0'
-    amber 'enterprises.iwakura:keqing-core:1.1.0'
-    amber 'enterprises.iwakura:keqing-gson:1.1.0'
-    amber 'enterprises.iwakura:keqing-snakeyaml:1.1.0'
+    amber 'enterprises.iwakura:keqing-core:1.1.1'
+    amber 'enterprises.iwakura:keqing-gson:1.1.1'
+    amber 'enterprises.iwakura:keqing-snakeyaml:1.1.1'
     amber 'enterprises.iwakura:sigewine-core:2.2.1'
     amber 'enterprises.iwakura:sigewine-aop:2.2.1'
     amber 'enterprises.iwakura:sigewine-aop-sentry:2.2.1'
     implementation 'enterprises.iwakura:amber-core:1.0.1'
     amber 'enterprises.iwakura:irminsul:0.1.0'
 
-    // GSON
+    // GSON, Snakeyaml
     amber 'com.google.code.gson:gson:2.13.1'
+    amber 'org.yaml:snakeyaml:2.4'
 
     // Guava
     amber 'com.google.guava:guava:33.4.8-jre'

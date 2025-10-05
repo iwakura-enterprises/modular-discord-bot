@@ -14,6 +14,7 @@ import net.dv8tion.jda.api.requests.GatewayIntent;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -31,6 +32,7 @@ public final class ModularBotConfig {
     // Settings
     private Discord discord = new Discord();
     private Irminsul irminsul = new Irminsul();
+    private Modules modules = new Modules();
 
     /**
      * Loads the configuration from the config file
@@ -83,5 +85,11 @@ public final class ModularBotConfig {
 
         private DatabaseServiceConfiguration database = new DatabaseServiceConfiguration();
 
+    }
+
+    @Getter
+    public static final class Modules {
+
+        private List<String> moduleDirectories = new ArrayList<>(List.of("./modules"));
     }
 }

@@ -16,6 +16,7 @@ public final class ModuleInfo {
 
     private final String name;
     private final String mainClass;
+    private final String configClass;
     private final String author;
     private final String version;
     private final boolean sigewineRequired;
@@ -24,53 +25,6 @@ public final class ModuleInfo {
     private final String[] softDepend;
     private final String[] loadBefore;
     private final String[] exceptionHandlingPackages;
-
-    /**
-     * Creates {@link ModuleInfo} for internal use
-     *
-     * @param name    Module name
-     * @param author  Module author
-     * @param version Module version
-     *
-     * @return {@link ModuleInfo}
-     */
-    public static ModuleInfo createInternalModuleInfo(String name, String author, String version) {
-        return ModuleInfo.builder()
-                         .name(name)
-                         .author(author)
-                         .version(version)
-                         .depend(new String[0])
-                         .softDepend(new String[0])
-                         .loadBefore(new String[0])
-                         .exceptionHandlingPackages(new String[0])
-                         .build();
-    }
-
-    /**
-     * Creates {@link ModuleInfo} for internal use
-     *
-     * @param name                      Module name
-     * @param author                    Module author
-     * @param version                   Module version
-     * @param depend                    Module dependencies
-     * @param softDepend                Module soft dependencies
-     * @param loadBefore                Module load before
-     * @param exceptionHandlingPackages Module exception handling packages
-     *
-     * @return {@link ModuleInfo}
-     */
-    public static ModuleInfo createInternalModuleInfo(@NonNull String name, @NonNull String author, @NonNull String version, boolean sigewineRequired, @NonNull String[] depend, @NonNull String[] softDepend, @NonNull String[] loadBefore, @NonNull String[] exceptionHandlingPackages) {
-        return ModuleInfo.builder()
-                         .name(name)
-                         .author(author)
-                         .version(version)
-                         .sigewineRequired(sigewineRequired)
-                         .depend(depend)
-                         .softDepend(softDepend)
-                         .loadBefore(loadBefore)
-                         .exceptionHandlingPackages(exceptionHandlingPackages)
-                         .build();
-    }
 
     /**
      * Loads {@link ModuleInfo} from {@link JsonObject}
@@ -91,6 +45,7 @@ public final class ModuleInfo {
         }
 
         String name = jsonObject.get("name").getAsString();
+        String configClass = jsonObject.has("configClass") ? jsonObject.get("configClass").getAsString() : null;
         String author = jsonObject.has("author") ? jsonObject.get("author").getAsString() : "Unknown author";
         String version = jsonObject.has("version") ? jsonObject.get("version").getAsString() : "Unknown version";
         String mainClass = jsonObject.get("mainClass").getAsString();
@@ -102,7 +57,7 @@ public final class ModuleInfo {
         String[] loadBefore = jsonObject.has("loadBefore") ? jsonArrayToStringArray(jsonObject.getAsJsonArray("loadBefore")) : new String[0];
         String[] exceptionHandlingPackages = jsonObject.has("exceptionHandlingPackages") ? jsonArrayToStringArray(jsonObject.getAsJsonArray("exceptionHandlingPackages")) : new String[0];
 
-        return new ModuleInfo(name, mainClass, author, version, sigewineRequired, sigewinePackagePath, depend, softDepend, loadBefore, exceptionHandlingPackages);
+        return new ModuleInfo(name, mainClass, configClass, author, version, sigewineRequired, sigewinePackagePath, depend, softDepend, loadBefore, exceptionHandlingPackages);
     }
 
     private static String[] jsonArrayToStringArray(JsonArray jsonArray) {

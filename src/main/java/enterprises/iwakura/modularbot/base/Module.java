@@ -1,12 +1,11 @@
 package enterprises.iwakura.modularbot.base;
 
 import com.jagrosh.jdautilities.command.CommandClientBuilder;
-import enterprises.iwakura.modularbot.concurrent.ModuleScheduler;
-import enterprises.iwakura.modularbot.objects.ModuleConfig;
+import enterprises.iwakura.ganyu.Ganyu;
+import enterprises.iwakura.modularbot.config.ModuleConfig;
 import enterprises.iwakura.modularbot.objects.ModuleInfo;
 import enterprises.iwakura.modularbot.objects.ModuleStatus;
 import enterprises.iwakura.modularbot.objects.activity.ModuleActivities;
-import enterprises.iwakura.ganyu.Ganyu;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
@@ -16,15 +15,13 @@ import java.util.List;
 
 @Getter
 @Setter
-public abstract class Module {
+public abstract class Module<TConfig extends ModuleConfig> {
 
     private final ModuleActivities moduleActivities = new ModuleActivities(this);
 
     private ModuleInfo moduleInfo;
+    private TConfig moduleConfig;
     private ModuleStatus moduleStatus;
-    private ModuleConfig moduleConfig;
-    private ModuleScheduler moduleScheduler;
-    private List<Class<?>> irminsulEntities;
 
     /**
      * This method is called when the module is loaded
@@ -83,5 +80,23 @@ public abstract class Module {
      */
     public void onUncaughtException(@NonNull Throwable throwable) {
         // Empty
+    }
+
+    /**
+     * Gets a list of all Irminsul entities (JPA-like entities) used by this module. These will be registered automatically.
+     *
+     * @return Non-null list of JPA entities
+     */
+    public List<Class<?>> getIrminsulEntities() {
+        return List.of();
+    }
+
+    /**
+     * Sets the module configuration. This is called by Modular Bot itself.
+     *
+     * @param moduleConfig Non-null {@link ModuleConfig}
+     */
+    public void setModuleConfig(ModuleConfig moduleConfig) {
+        this.moduleConfig = (TConfig) moduleConfig;
     }
 }

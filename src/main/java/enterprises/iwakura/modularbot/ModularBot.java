@@ -12,7 +12,6 @@ import lombok.NonNull;
 import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Getter
@@ -23,8 +22,6 @@ public final class ModularBot {
 
     private static final @Getter Sigewine sigewine = new Sigewine(SigewineOptions.builder().build());
     private static ModularBot instance;
-
-    private final List<Module> internalModules = new ArrayList<>();
 
     private final Ganyu ganyu;
     private final ModularBotShardManager modularBotShardManager;
@@ -99,9 +96,6 @@ public final class ModularBot {
         log.info("Registering UncaughtExceptionReporter");
         registerUncaughtExceptionReporter();
 
-        log.info("Preparing ModuleManager");
-        prepareModuleManager();
-
         log.info("Phase 2/5 - Loading modules...");
         loadModules();
 
@@ -162,16 +156,6 @@ public final class ModularBot {
             log.warn("Uncaught exception occurred! Sending to modules...", exceptionReport.getThrowable());
             moduleManager.processException(exceptionReport.getThrowable());
         });
-    }
-
-    /**
-     * Prepares module manager
-     */
-    private void prepareModuleManager() {
-        if (!internalModules.isEmpty()) {
-            log.info("Adding {} internal modules...", internalModules.size());
-            moduleManager.addInternalModules(internalModules.toArray(new Module[0]));
-        }
     }
 
     /**
@@ -247,8 +231,6 @@ public final class ModularBot {
 
         log.info("Shutting down ModularDiscordBot @ {}", ModularBotConstants.getVersion());
 
-        internalModules.clear();
-
         log.info("Shutting down Ganyu...");
         ganyu.stop();
 
@@ -264,21 +246,5 @@ public final class ModularBot {
 
         log.info("Halting JVM...");
         Runtime.getRuntime().halt(0);
-    }
-
-    /**
-     * Adds internal module. Added modules will be loaded upon starting the ModularBot. If it's already started, it will be loaded immediately.
-     *
-     * @param modules Modules to add
-     */
-    public void addInternalModules(@NonNull Module... modules) {
-        if (running) {
-            moduleManager.addInternalModules(modules);
-            return;
-        }
-
-        var listModules = List.of(modules);
-        log.info("Adding {} internal modules", listModules.size());
-        internalModules.addAll(listModules);
     }
 }

@@ -8,10 +8,7 @@ import java.nio.file.Path;
 public final class ModularBotConstants {
 
     public static final Path PATH_FOLDER_MODULES = Path.of("./modules");
-    public static final String PATH_FOLDER_MODULE_CONFIGS = "./modules/%s";
-    public static final String PATH_FOLDER_JSON_DATA = "./json_data/";
     public static final String FILE_NAME_MODULE_INFO = "module_info.json";
-    public static final String FILE_NAME_MODULE_CONFIG = "config.json";
 
     private ModularBotConstants() {
     }
