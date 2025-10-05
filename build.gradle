@@ -20,6 +20,7 @@ repositories {
 
     maven { url "https://m2.chew.pro/snapshots" }
     maven { url "https://s01.oss.sonatype.org/content/repositories/releases" }
+    maven { url "https://repo1.maven.org/maven2" }
 
     flatDir {
         dirs 'libs'

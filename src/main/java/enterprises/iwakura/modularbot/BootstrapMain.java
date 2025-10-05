@@ -11,7 +11,7 @@ public class BootstrapMain {
         System.out.println("Bootstrapping Modular Bot's dependencies...");
         Amber amber = Amber.classLoader();
         amber.bootstrap(BootstrapOptions.builder()
-                //.exitCodeAfterDownload(-500)
+                .exitCodeAfterDownload(-5)
                 .build()
         );
         ModularBotMain.main(args);
