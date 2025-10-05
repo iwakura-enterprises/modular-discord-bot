@@ -2,8 +2,7 @@ package enterprises.iwakura.modularbot;
 
 import com.jagrosh.jdautilities.command.CommandClientBuilder;
 import dev.mayuna.mayusjdautils.interactive.InteractiveListener;
-import enterprises.iwakura.modularbot.config.ModularBotConfig;
-import enterprises.iwakura.modularbot.managers.DefaultModuleManager;
+import enterprises.iwakura.modularbot.managers.ModuleManager;
 import enterprises.iwakura.modularbot.objects.ModuleStatus;
 import enterprises.iwakura.modularbot.objects.activity.ModuleActivity;
 import enterprises.iwakura.sigewine.core.annotations.RomaritimeBean;
@@ -26,7 +25,7 @@ public final class ModularBotShardManager {
     public static final int INVALID_SHARD_ID = -1;
 
     private final ModularBotConfig modularBotConfig;
-    private final DefaultModuleManager moduleManager;
+    private final ModuleManager moduleManager;
 
     private final Timer presenceActivityUpdaterTimer = new Timer();
     private @Getter CommandClientBuilder commandClientBuilder;

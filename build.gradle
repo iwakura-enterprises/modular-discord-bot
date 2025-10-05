@@ -184,3 +184,43 @@ java {
 tasks.withType(JavaCompile) {
     options.release = 21
 }
+
+def generatedSrcDir = "${buildDir}/generated-src/main/java"
+
+task generateVersionClass {
+    doLast {
+        def versionClassFile = file("${generatedSrcDir}/enterprises/iwakura/modularbot/Version.java")
+        versionClassFile.parentFile.mkdirs()
+        versionClassFile.text =
+                """
+package enterprises.iwakura.modularbot;
+
+/**
+ * Auto-generated version class.
+ */
+public final class Version {
+
+    /**
+     * Project's current version.
+     */
+    public static final String VERSION = "${project.version}";
+
+    private Version() {
+        // Prevent instantiation
+    }
+}
+"""
+    }
+}
+
+// Include generated sources in compilation
+sourceSets {
+    main {
+        java {
+            srcDir generatedSrcDir
+        }
+    }
+}
+
+// Make sure version class is generated before compilation
+compileJava.dependsOn generateVersionClass

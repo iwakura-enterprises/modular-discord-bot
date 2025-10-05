@@ -2,17 +2,14 @@ package enterprises.iwakura.modularbot.objects;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 
 import java.io.IOException;
 
 /**
  * Module info
  */
-@Getter
+@Data
 @Builder
 @RequiredArgsConstructor
 public final class ModuleInfo {

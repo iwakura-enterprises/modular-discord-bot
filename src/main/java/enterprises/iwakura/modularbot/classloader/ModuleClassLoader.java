@@ -33,7 +33,7 @@ public final class ModuleClassLoader extends URLClassLoader {
             try {
                 return path.toUri().toURL();
             } catch (MalformedURLException e) {
-                throw new RuntimeException(e);
+                throw new RuntimeException("Failed to convert path %s to URL".formatted(path), e);
             }
         }).toArray(URL[]::new), parent);
         this.otherClassLoaders = otherClassLoaders;

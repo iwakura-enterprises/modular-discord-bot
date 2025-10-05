@@ -1,6 +1,6 @@
 package enterprises.iwakura.modularbot.sigewine;
 
-import enterprises.iwakura.modularbot.config.ModularBotConfig;
+import enterprises.iwakura.modularbot.ModularBotConfig;
 import enterprises.iwakura.modularbot.irminsul.ModularBotIrminsul;
 import enterprises.iwakura.sigewine.core.annotations.RomaritimeBean;
 import lombok.RequiredArgsConstructor;

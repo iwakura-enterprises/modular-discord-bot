@@ -1,9 +1,11 @@
-package enterprises.iwakura.modularbot.config;
+package enterprises.iwakura.modularbot;
 
 import com.google.gson.Gson;
 import dev.mayuna.mayusjsonutils.MayuJson;
 import dev.mayuna.mayusjsonutils.ObjectLoader;
-import enterprises.iwakura.modularbot.ModularBotConstants;
+import enterprises.iwakura.keqing.Keqing;
+import enterprises.iwakura.keqing.impl.GsonSerializer;
+import enterprises.iwakura.keqing.impl.SnakeYamlSerializer;
 import enterprises.iwakura.irminsul.DatabaseServiceConfiguration;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
@@ -11,6 +13,7 @@ import net.dv8tion.jda.api.requests.GatewayIntent;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -22,7 +25,8 @@ import java.util.List;
 @Log4j2
 public final class ModularBotConfig {
 
-    private static final Gson GSON = MayuJson.DEFAULT_GSON;
+    public static final Gson GSON = new Gson();
+    public static final String CONFIG_FILE_NAME_TEMPLATE = "modular_bot";
 
     // Settings
     private Discord discord = new Discord();
@@ -35,21 +39,11 @@ public final class ModularBotConfig {
      */
     public static ModularBotConfig load() {
         try {
-            return ObjectLoader.loadOrCreateFrom(ModularBotConfig.class, ModularBotConstants.PATH_MODULAR_BOT_CONFIG, StandardCharsets.UTF_8, GSON);
+            ObjectLoader.loadOrCreateFrom(ModularBotConfig.class, Path.of(CONFIG_FILE_NAME_TEMPLATE + ".json"), StandardCharsets.UTF_8, GSON);
+            var keqing = Keqing.loadFromFileSystem(CONFIG_FILE_NAME_TEMPLATE, '-', new GsonSerializer(GSON));
+            return keqing.readProperty("", ModularBotConfig.class);
         } catch (IOException exception) {
-            log.error("Failed to load config!", exception);
-            return null;
-        }
-    }
-
-    /**
-     * Saves the configuration to the config file
-     */
-    public void save() {
-        try {
-            ObjectLoader.saveTo(this, ModularBotConstants.PATH_MODULAR_BOT_CONFIG, StandardCharsets.UTF_8, GSON);
-        } catch (IOException exception) {
-            log.error("Failed to save config!", exception);
+            throw new RuntimeException("Failed to load config!", exception);
         }
     }
 

@@ -2,7 +2,7 @@ package enterprises.iwakura.modularbot.console;
 
 import enterprises.iwakura.modularbot.ModularBot;
 import enterprises.iwakura.modularbot.base.Module;
-import enterprises.iwakura.modularbot.base.ModuleManager;
+import enterprises.iwakura.modularbot.managers.ModuleManager;
 import enterprises.iwakura.modularbot.objects.ModuleInfo;
 import enterprises.iwakura.ganyu.GanyuCommand;
 import enterprises.iwakura.ganyu.annotation.*;

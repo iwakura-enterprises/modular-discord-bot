@@ -2,23 +2,24 @@ package enterprises.iwakura.modularbot.managers;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.jagrosh.jdautilities.command.CommandClientBuilder;
+import enterprises.iwakura.amber.Amber;
+import enterprises.iwakura.ganyu.Ganyu;
 import enterprises.iwakura.modularbot.ModularBot;
 import enterprises.iwakura.modularbot.ModularBotConstants;
 import enterprises.iwakura.modularbot.amber.ModuleAmberLogger;
 import enterprises.iwakura.modularbot.base.Module;
-import enterprises.iwakura.modularbot.base.ModuleManager;
 import enterprises.iwakura.modularbot.classloader.ModuleClassLoader;
-import enterprises.iwakura.modularbot.concurrent.ModuleScheduler;
 import enterprises.iwakura.modularbot.irminsul.ModularBotIrminsul;
 import enterprises.iwakura.modularbot.objects.ModuleConfig;
 import enterprises.iwakura.modularbot.objects.ModuleInfo;
 import enterprises.iwakura.modularbot.objects.ModuleStatus;
 import enterprises.iwakura.modularbot.util.InputStreamUtils;
-import enterprises.iwakura.amber.Amber;
 import enterprises.iwakura.sigewine.core.BeanDefinition;
 import enterprises.iwakura.sigewine.core.annotations.RomaritimeBean;
 import lombok.NonNull;
 import lombok.extern.log4j.Log4j2;
+import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -30,9 +31,10 @@ import java.util.*;
 import java.util.stream.Stream;
 import java.util.zip.ZipFile;
 
+@SuppressWarnings("LombokGetterMayBeUsed")
 @RomaritimeBean
 @Log4j2
-public final class DefaultModuleManager implements ModuleManager {
+public final class ModuleManager {
 
     public static final String MODULE_CONFIG_BEAN_NAME = "moduleConfig_%s";
 
@@ -46,7 +48,7 @@ public final class DefaultModuleManager implements ModuleManager {
     private boolean stateEnabled = false;
     private boolean stateUnloaded = false;
 
-    public DefaultModuleManager(ModularBotIrminsul irminsul) {
+    public ModuleManager(ModularBotIrminsul irminsul) {
         this.irminsul = irminsul;
     }
 
@@ -64,9 +66,19 @@ public final class DefaultModuleManager implements ModuleManager {
      *
      * @return List of modules
      */
-    @Override
     public List<Module> getModules() {
         return modules;
+    }
+
+    /**
+     * Returns module by its name, if loaded.
+     *
+     * @param name Name of the module
+     *
+     * @return Optional of {@link Module}
+     */
+    public Optional<Module> getModuleByName(String name) {
+        return modules.stream().filter(module -> module.getModuleInfo().getName().equalsIgnoreCase(name)).findFirst();
     }
 
     /**
@@ -74,7 +86,6 @@ public final class DefaultModuleManager implements ModuleManager {
      *
      * @param internalModules Module(s) to add
      */
-    @Override
     public void addInternalModules(@NonNull Module... internalModules) {
         if (stateUnloaded) {
             throw new IllegalStateException("Cannot add internal modules after unloading!");
@@ -85,7 +96,6 @@ public final class DefaultModuleManager implements ModuleManager {
         listModules.forEach(module -> {
             module.setModuleStatus(ModuleStatus.NOT_LOADED);
             module.setModuleConfig(new ModuleConfig(module.getModuleInfo(), new JsonObject()));
-            module.setModuleScheduler(new ModuleScheduler(module));
 
             // Add the module's class loader to the list of class loaders
             synchronized (moduleClassLoaders) {
@@ -117,7 +127,6 @@ public final class DefaultModuleManager implements ModuleManager {
         listModules.forEach(this::enableModule);
     }
 
-    @Override
     public boolean loadModules() {
         log.info("Loading modules...");
 
@@ -219,7 +228,7 @@ public final class DefaultModuleManager implements ModuleManager {
         }
 
         try {
-            moduleClassLoader = new ModuleClassLoader(moduleJarDependencies, DefaultModuleManager.class.getClassLoader(), moduleClassLoaders);
+            moduleClassLoader = new ModuleClassLoader(moduleJarDependencies, ModuleManager.class.getClassLoader(), moduleClassLoaders);
         } catch (MalformedURLException exception) {
             log.error("Failed to create class loader for module: {}", moduleFile.getFileName(), exception);
             return Optional.empty();
@@ -277,7 +286,6 @@ public final class DefaultModuleManager implements ModuleManager {
             module.setModuleInfo(moduleInfo);
             module.setModuleStatus(ModuleStatus.NOT_LOADED);
             module.setModuleConfig(moduleConfig);
-            module.setModuleScheduler(new ModuleScheduler(module));
 
             // Add the module's class loader to the list of class loaders
             synchronized (moduleClassLoaders) {
@@ -301,7 +309,6 @@ public final class DefaultModuleManager implements ModuleManager {
         return Optional.empty();
     }
 
-    @Override
     public void loadModule(Module module) {
         String moduleName = module.getModuleInfo().getName();
 
@@ -331,7 +338,6 @@ public final class DefaultModuleManager implements ModuleManager {
         modules.add(module);
     }
 
-    @Override
     public void enableModules() {
         log.info("Enabling {} modules...", modules.size());
 
@@ -359,7 +365,6 @@ public final class DefaultModuleManager implements ModuleManager {
         log.info("Enabled {} modules successfully.", modules.size());
     }
 
-    @Override
     public void enableModule(Module module) {
         if (module.getModuleStatus() == ModuleStatus.ENABLED) {
             return;
@@ -406,7 +411,6 @@ public final class DefaultModuleManager implements ModuleManager {
         module.setModuleStatus(ModuleStatus.ENABLED);
     }
 
-    @Override
     public void unloadModules() {
         if (modules.isEmpty()) {
             return;
@@ -423,7 +427,6 @@ public final class DefaultModuleManager implements ModuleManager {
         log.info("Unloaded {} modules successfully.", oldModules.size());
     }
 
-    @Override
     public void unloadModule(Module module) {
         String moduleName = module.getModuleInfo().getName();
 
@@ -455,7 +458,6 @@ public final class DefaultModuleManager implements ModuleManager {
 
                 try {
                     module.onDisable();
-                    module.getModuleScheduler().cancelTasks();
                 } catch (Exception disableException) {
                     log.error("Exception occurred while disabling module {}!", moduleName, disableException);
                 }
@@ -466,5 +468,54 @@ public final class DefaultModuleManager implements ModuleManager {
                 unloadModule(module);
             }
         }
+    }
+
+    /**
+     * Processes all modules with specified {@link CommandClientBuilder}
+     *
+     * @param commandClientBuilder Non-null {@link CommandClientBuilder}
+     */
+    public void processCommandClientBuilder(CommandClientBuilder commandClientBuilder) {
+        modules.forEach(module -> module.onCommandClientBuilderInitialization(commandClientBuilder));
+    }
+
+    /**
+     * Processes all modules with specified {@link Ganyu}
+     *
+     * @param ganyu Non-null {@link Ganyu}
+     */
+    public void processGanyu(Ganyu ganyu) {
+        modules.forEach(module -> module.onConsoleCommandRegistration(ganyu));
+    }
+
+    /**
+     * Processes all modules with specified {@link DefaultShardManagerBuilder}
+     *
+     * @param shardManagerBuilder Non-null {@link DefaultShardManagerBuilder}
+     */
+    public void processShardBuilder(DefaultShardManagerBuilder shardManagerBuilder) {
+        modules.forEach(module -> module.onShardManagerBuilderInitialization(shardManagerBuilder));
+    }
+
+    /**
+     * Processes all modules with specified {@link Throwable} based on their exception handling packages
+     *
+     * @param throwable Non-null {@link Throwable}
+     */
+    public void processException(Throwable throwable) {
+        modules.forEach(module -> {
+            try {
+                for (var stackTraceElement : throwable.getStackTrace()) {
+                    for (String packageName : module.getModuleInfo().getExceptionHandlingPackages()) {
+                        if (stackTraceElement.getClassName().contains(packageName)) {
+                            module.onUncaughtException(throwable);
+                            return;
+                        }
+                    }
+                }
+            } catch (Exception exception) {
+                log.error("Exception occurred while processing modules with uncaught exception!", exception);
+            }
+        });
     }
 }

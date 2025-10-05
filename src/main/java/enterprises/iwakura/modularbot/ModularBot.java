@@ -2,8 +2,7 @@ package enterprises.iwakura.modularbot;
 
 import dev.mayuna.mayuslibrary.exceptionreporting.UncaughtExceptionReporter;
 import enterprises.iwakura.modularbot.base.Module;
-import enterprises.iwakura.modularbot.config.ModularBotConfig;
-import enterprises.iwakura.modularbot.managers.DefaultModuleManager;
+import enterprises.iwakura.modularbot.managers.ModuleManager;
 import enterprises.iwakura.ganyu.Ganyu;
 import enterprises.iwakura.sigewine.core.Sigewine;
 import enterprises.iwakura.sigewine.core.SigewineOptions;
@@ -30,7 +29,7 @@ public final class ModularBot {
     private final Ganyu ganyu;
     private final ModularBotShardManager modularBotShardManager;
     private final ModularBotConfig config;
-    private final DefaultModuleManager moduleManager;
+    private final ModuleManager moduleManager;
 
     private boolean running;
     private boolean stopping;
@@ -39,7 +38,7 @@ public final class ModularBot {
             Ganyu ganyu,
             ModularBotShardManager modularBotShardManager,
             ModularBotConfig config,
-            DefaultModuleManager moduleManager) {
+            ModuleManager moduleManager) {
         this.ganyu = ganyu;
         this.modularBotShardManager = modularBotShardManager;
         this.config = config;
