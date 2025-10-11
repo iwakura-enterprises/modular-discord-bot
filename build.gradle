@@ -18,8 +18,7 @@ version '3.2.0'
 repositories {
     mavenCentral()
 
-    maven { url "https://m2.chew.pro/snapshots" }
-    maven { url "https://s01.oss.sonatype.org/content/repositories/releases" }
+    maven { url "https://m2.chew.pro/releases" }
     maven { url "https://repo1.maven.org/maven2" }
 
     flatDir {
@@ -29,14 +28,12 @@ repositories {
 
 dependencies {
     // JDA, Chewutils
-    amber 'net.dv8tion:JDA:5.6.1'
-    amber 'pw.chew:jda-chewtils:2.0-SNAPSHOT'
+    amber 'net.dv8tion:JDA:6.0.0'
+    amber 'pw.chew:jda-chewtils:2.1'
 
     // Personal libraries
-    amber 'dev.mayuna:mayus-jda-utilities:3.5.0'
-    amber 'dev.mayuna:mayus-library:3.1'
-    amber 'dev.mayuna:mayus-json-utilities:2.1'
-
+    implementation 'enterprises.iwakura:amber-core:1.0.2'
+    amber 'enterprises.iwakura:jda-interactables:2.1.0'
     amber 'enterprises.iwakura:ganyu:1.0.0'
     amber 'enterprises.iwakura:keqing-core:1.1.1'
     amber 'enterprises.iwakura:keqing-gson:1.1.1'
@@ -44,8 +41,9 @@ dependencies {
     amber 'enterprises.iwakura:sigewine-core:2.2.1'
     amber 'enterprises.iwakura:sigewine-aop:2.2.1'
     amber 'enterprises.iwakura:sigewine-aop-sentry:2.2.1'
-    implementation 'enterprises.iwakura:amber-core:1.0.2'
     amber 'enterprises.iwakura:irminsul:0.1.0'
+    amber 'dev.mayuna:mayus-library:3.1'
+    amber 'dev.mayuna:mayus-json-utilities:2.1'
 
     // GSON, Snakeyaml
     amber 'com.google.code.gson:gson:2.13.1'
@@ -132,14 +130,6 @@ tasks.withType(JavaCompile) {
 java {
     sourceCompatibility = JavaVersion.VERSION_21
     targetCompatibility = JavaVersion.VERSION_21
-}
-
-jar {
-    manifest {
-        attributes(
-                'Main-Class': 'enterprises.iwakura.ganyu.test.Main',
-        )
-    }
 }
 
 task publishCloseAndRelease() {

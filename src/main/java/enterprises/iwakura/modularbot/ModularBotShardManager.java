@@ -1,7 +1,7 @@
 package enterprises.iwakura.modularbot;
 
 import com.jagrosh.jdautilities.command.CommandClientBuilder;
-import dev.mayuna.mayusjdautils.interactive.InteractiveListener;
+import enterprises.iwakura.jdainteractables.InteractableListener;
 import enterprises.iwakura.modularbot.managers.ModuleManager;
 import enterprises.iwakura.modularbot.objects.ModuleStatus;
 import enterprises.iwakura.modularbot.objects.activity.ModuleActivity;
@@ -99,11 +99,11 @@ public final class ModularBotShardManager {
             return false;
         }
 
-        log.info("Building CommandClientBuilder...");
+        log.info("Registering CommandClientBuilder...");
         shardManagerBuilder.addEventListeners(commandClientBuilder.build());
 
-        log.info("Registering InteractiveListener...");
-        shardManagerBuilder.addEventListeners(new InteractiveListener());
+        log.info("Registering JDA-Interactable's InteractableListener...");
+        shardManagerBuilder.addEventListeners(new InteractableListener());
 
         log.info("Building ShardManager...");
 
