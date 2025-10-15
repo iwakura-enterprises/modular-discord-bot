@@ -33,7 +33,7 @@ dependencies {
 
     // Personal libraries
     implementation 'enterprises.iwakura:amber-core:1.0.2'
-    amber 'enterprises.iwakura:jda-interactables:2.1.0'
+    amber 'enterprises.iwakura:jda-interactables:2.1.2'
     amber 'enterprises.iwakura:ganyu:1.0.0'
     amber 'enterprises.iwakura:keqing-core:1.1.1'
     amber 'enterprises.iwakura:keqing-gson:1.1.1'
