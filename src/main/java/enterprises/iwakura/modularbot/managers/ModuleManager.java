@@ -4,6 +4,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.jagrosh.jdautilities.command.CommandClientBuilder;
 import enterprises.iwakura.amber.Amber;
+import enterprises.iwakura.amber.BootstrapOptions;
 import enterprises.iwakura.ganyu.Ganyu;
 import enterprises.iwakura.modularbot.ModularBot;
 import enterprises.iwakura.modularbot.ModularBotConfig;
@@ -172,7 +173,7 @@ public final class ModuleManager {
         moduleJarDependencies.add(moduleFile);
 
         try {
-            moduleJarDependencies.addAll(amber.bootstrap());
+            moduleJarDependencies.addAll(amber.bootstrap(BootstrapOptions.builder().downloaderThreadCount(64).build()));
         } catch (Exception exception) {
             log.error("Failed to bootstrap module: {}", moduleFile.getFileName(), exception);
             return Optional.empty();
