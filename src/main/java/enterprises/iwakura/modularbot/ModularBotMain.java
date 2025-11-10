@@ -1,22 +1,21 @@
 package enterprises.iwakura.modularbot;
 
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 
-@Log4j2
+@Slf4j
 public final class ModularBotMain {
-
-    private static ModularBot modularBot;
 
     public static void main(String[] args) {
         log.info("Bootstrapping ModularBot...");
 
         log.info("Initializing Sigewine...");
-        final var sigewine = ModularBot.getSigewine();
-        sigewine.treatment(ModularBotMain.class);
-        log.info("Sigewine initialized with {} beans", ModularBot.getSigewine().getSingletonBeans().size());
+        //noinspection deprecation
+        var sigewine = ModularBot.getSigewine();
+        sigewine.scan(ModularBotMain.class);
+        log.info("Sigewine initialized with {} beans", sigewine.getSingletonBeans().size());
 
         log.info("Getting ModularBot bean...");
-        modularBot = sigewine.syringe(ModularBot.class);
+        var modularBot = sigewine.inject(ModularBot.class);
 
         log.info("Starting ModularBot...");
         modularBot.start(args);

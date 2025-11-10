@@ -6,7 +6,8 @@ import enterprises.iwakura.modularbot.managers.ModuleManager;
 import enterprises.iwakura.modularbot.objects.ModuleInfo;
 import enterprises.iwakura.ganyu.GanyuCommand;
 import enterprises.iwakura.ganyu.annotation.*;
-import enterprises.iwakura.sigewine.core.annotations.RomaritimeBean;
+import enterprises.iwakura.sigewine.core.annotations.Bean;
+import enterprises.iwakura.sigewine.core.utils.BeanAccessor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import net.dv8tion.jda.api.JDA;
@@ -15,7 +16,7 @@ import org.apache.logging.log4j.Level;
 
 import java.util.List;
 
-@RomaritimeBean
+@Bean
 @RequiredArgsConstructor
 @Log4j2
 @Command("modular")
@@ -23,11 +24,13 @@ import java.util.List;
 @Syntax("")
 public final class ModularConsoleCommand implements GanyuCommand {
 
+    @Bean
+    private final BeanAccessor<ModularBot> modularBotAccessor = new BeanAccessor<>(ModularBot.class);
+
     @SubCommand("modules")
     @Description("Shows all modules")
     public void showAllModules() {
-        var modularBot = ModularBot.getSigewine().syringe(ModularBot.class);
-        ModuleManager moduleManager = modularBot.getModuleManager();
+        ModuleManager moduleManager = modularBotAccessor.getBeanInstance().getModuleManager();
         List<Module<?>> modules = moduleManager.getModules();
 
         log.info("== Modules - {} ==", modules.size());
@@ -46,8 +49,7 @@ public final class ModularConsoleCommand implements GanyuCommand {
     public void showShards(
             @OptionalArg Boolean verbose
     ) {
-        var modularBot = ModularBot.getSigewine().syringe(ModularBot.class);
-        ShardManager shardManager = modularBot.getModularBotShardManager().get();
+        ShardManager shardManager = modularBotAccessor.getBeanInstance().getModularBotShardManager().get();
 
         log.info("== Shard Info ==");
         log.info("Total shards: {}", shardManager.getShardsTotal());

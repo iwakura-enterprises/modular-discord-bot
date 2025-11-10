@@ -5,10 +5,10 @@ import enterprises.iwakura.jdainteractables.InteractableListener;
 import enterprises.iwakura.modularbot.managers.ModuleManager;
 import enterprises.iwakura.modularbot.objects.ModuleStatus;
 import enterprises.iwakura.modularbot.objects.activity.ModuleActivity;
-import enterprises.iwakura.sigewine.core.annotations.RomaritimeBean;
+import enterprises.iwakura.sigewine.core.annotations.Bean;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder;
 import net.dv8tion.jda.api.sharding.ShardManager;
 
@@ -17,8 +17,8 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
-@Log4j2
-@RomaritimeBean
+@Slf4j
+@Bean
 @RequiredArgsConstructor
 public final class ModularBotShardManager {
 
@@ -39,7 +39,7 @@ public final class ModularBotShardManager {
      * Initializes ShardManager
      */
     public boolean init() {
-        final var discordSettings = modularBotConfig.getDiscord();
+        var discordSettings = modularBotConfig.getDiscord();
 
         log.info("Creating CommandClientBuilder...");
         commandClientBuilder = new CommandClientBuilder()
@@ -47,7 +47,7 @@ public final class ModularBotShardManager {
                 .setActivity(null);
 
         try {
-            final ModularBotConfig.Discord.ShardManager shardManagerSettings = discordSettings.getShardManager();
+            ModularBotConfig.Discord.ShardManager shardManagerSettings = discordSettings.getShardManager();
             if (discordSettings.getShardManager().isLight()) {
                 log.info("Creating light DefaultShardManagerBuilder...");
                 shardManagerBuilder = DefaultShardManagerBuilder.createLight(discordSettings.getToken(), shardManagerSettings.getGatewayIntents());

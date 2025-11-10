@@ -1,26 +1,22 @@
 package enterprises.iwakura.modularbot;
 
 import dev.mayuna.mayuslibrary.exceptionreporting.UncaughtExceptionReporter;
-import enterprises.iwakura.modularbot.base.Module;
 import enterprises.iwakura.modularbot.managers.ModuleManager;
 import enterprises.iwakura.ganyu.Ganyu;
 import enterprises.iwakura.sigewine.core.Sigewine;
 import enterprises.iwakura.sigewine.core.SigewineOptions;
-import enterprises.iwakura.sigewine.core.annotations.RomaritimeBean;
+import enterprises.iwakura.sigewine.core.annotations.Bean;
 import lombok.Getter;
-import lombok.NonNull;
 import lombok.Setter;
-import lombok.extern.log4j.Log4j2;
-
-import java.util.List;
+import lombok.extern.slf4j.Slf4j;
 
 @Getter
 @Setter
-@Log4j2
-@RomaritimeBean
+@Slf4j
+@Bean
 public final class ModularBot {
 
-    private static final @Getter Sigewine sigewine = new Sigewine(SigewineOptions.builder().build());
+    private static final Sigewine sigewine = new Sigewine(SigewineOptions.builder().build());
     private static ModularBot instance;
 
     private final Ganyu ganyu;
@@ -83,7 +79,7 @@ public final class ModularBot {
         );
 
         log.info("Loading...");
-        final long startMillis = System.currentTimeMillis();
+        long startMillis = System.currentTimeMillis();
 
         log.info("Phase 1/5 - Loading core...");
 
@@ -246,5 +242,17 @@ public final class ModularBot {
 
         log.info("Halting JVM...");
         Runtime.getRuntime().halt(0);
+    }
+
+    /**
+     * Returns the Sigewine instance used to create ModularBot and other modules' classes.
+     *
+     * @return the Sigewine instance
+     *
+     * @deprecated Use dependency injection to get Sigewine instance instead.
+     */
+    @Deprecated
+    public static Sigewine getSigewine() {
+        return sigewine;
     }
 }

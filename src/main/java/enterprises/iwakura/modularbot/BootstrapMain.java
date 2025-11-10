@@ -11,7 +11,7 @@ public class BootstrapMain {
         System.out.println("Bootstrapping Modular Bot's dependencies...");
         Amber amber = Amber.classLoader();
         amber.bootstrap(BootstrapOptions.builder()
-                .exitCodeAfterDownload(-5)
+                .exitCodeAfterDownload(-1225)
                 .exitMessageAfterDownload("Please, restart the application.")
                 .downloaderThreadCount(64)
                 .build()

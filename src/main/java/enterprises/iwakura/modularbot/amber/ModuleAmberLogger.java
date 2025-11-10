@@ -1,9 +1,9 @@
 package enterprises.iwakura.modularbot.amber;
 
 import enterprises.iwakura.amber.Logger;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 
-@Log4j2
+@Slf4j
 public class ModuleAmberLogger implements Logger {
 
     /**

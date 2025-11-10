@@ -1,6 +1,7 @@
 package enterprises.iwakura.modularbot;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import dev.mayuna.mayusjsonutils.MayuJson;
 import dev.mayuna.mayusjsonutils.ObjectLoader;
 import enterprises.iwakura.keqing.Keqing;
@@ -8,7 +9,7 @@ import enterprises.iwakura.keqing.impl.GsonSerializer;
 import enterprises.iwakura.keqing.impl.SnakeYamlSerializer;
 import enterprises.iwakura.irminsul.DatabaseServiceConfiguration;
 import lombok.Getter;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 
 import java.io.IOException;
@@ -23,15 +24,14 @@ import java.util.List;
  */
 @SuppressWarnings("FieldMayBeFinal")
 @Getter
-@Log4j2
+@Slf4j
 public final class ModularBotConfig {
 
-    public static final Gson GSON = new Gson();
+    public static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     public static final String CONFIG_FILE_NAME_TEMPLATE = "modular_bot";
 
     // Settings
     private Discord discord = new Discord();
-    private Irminsul irminsul = new Irminsul();
     private Modules modules = new Modules();
 
     /**
@@ -81,15 +81,10 @@ public final class ModularBotConfig {
     }
 
     @Getter
-    public static final class Irminsul {
-
-        private DatabaseServiceConfiguration database = new DatabaseServiceConfiguration();
-
-    }
-
-    @Getter
     public static final class Modules {
 
         private List<String> moduleDirectories = new ArrayList<>(List.of("./modules"));
+        private int amberDownloaderThreads = 64;
+        private boolean overrideModuleDependenciesLibraryDirectory = true;
     }
 }

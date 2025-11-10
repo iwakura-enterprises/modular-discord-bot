@@ -13,13 +13,14 @@ import enterprises.iwakura.modularbot.amber.ModuleAmberLogger;
 import enterprises.iwakura.modularbot.base.Module;
 import enterprises.iwakura.modularbot.classloader.ModuleClassLoader;
 import enterprises.iwakura.modularbot.config.ModuleConfig;
-import enterprises.iwakura.modularbot.irminsul.ModularBotIrminsul;
 import enterprises.iwakura.modularbot.objects.ModuleInfo;
 import enterprises.iwakura.modularbot.objects.ModuleStatus;
 import enterprises.iwakura.modularbot.util.InputStreamUtils;
 import enterprises.iwakura.sigewine.core.BeanDefinition;
-import enterprises.iwakura.sigewine.core.annotations.RomaritimeBean;
-import lombok.extern.log4j.Log4j2;
+import enterprises.iwakura.sigewine.core.Sigewine;
+import enterprises.iwakura.sigewine.core.annotations.Bean;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder;
 import org.apache.commons.collections4.ListUtils;
 
@@ -34,20 +35,16 @@ import java.util.stream.Stream;
 import java.util.zip.ZipFile;
 
 @SuppressWarnings("LombokGetterMayBeUsed")
-@RomaritimeBean
-@Log4j2
+@Bean
+@Slf4j
+@RequiredArgsConstructor
 public final class ModuleManager {
 
-    private final ModularBotIrminsul irminsul;
     private final ModularBotConfig modularBotConfig;
+    private final Sigewine sigewine;
 
     private final List<ClassLoader> moduleClassLoaders = Collections.synchronizedList(new LinkedList<>());
     private final List<Module<?>> modules = Collections.synchronizedList(new LinkedList<>());
-
-    public ModuleManager(ModularBotIrminsul irminsul, ModularBotConfig modularBotConfig) {
-        this.irminsul = irminsul;
-        this.modularBotConfig = modularBotConfig;
-    }
 
     /**
      * Returns list of loaded modules in memory.
@@ -127,8 +124,6 @@ public final class ModuleManager {
             }
         }
 
-        List<Class<?>> irminsulEntities = new ArrayList<>();
-
         for (Path moduleFile : moduleFiles) {
             Optional<Module<?>> optionalModule = loadModuleFile(moduleFile);
 
@@ -141,16 +136,6 @@ public final class ModuleManager {
 
             // Load the module
             loadModule(module);
-
-            // Collect any irminsul entities
-            if (module.getIrminsulEntities() != null) {
-                irminsulEntities.addAll(module.getIrminsulEntities());
-            }
-        }
-
-        if (!irminsulEntities.isEmpty()) {
-            log.info("Initializing {} Irminsul entities...", irminsulEntities.size());
-            irminsul.initialize(irminsulEntities.toArray(new Class[0]));
         }
 
         return true;
@@ -173,7 +158,15 @@ public final class ModuleManager {
         moduleJarDependencies.add(moduleFile);
 
         try {
-            moduleJarDependencies.addAll(amber.bootstrap(BootstrapOptions.builder().downloaderThreadCount(64).build()));
+            var bootstrapOptions = BootstrapOptions.builder()
+                    .downloaderThreadCount(modularBotConfig.getModules().getAmberDownloaderThreads())
+                    .build();
+
+            if (modularBotConfig.getModules().isOverrideModuleDependenciesLibraryDirectory()) {
+                bootstrapOptions.setLibraryDirectoryOverride(Path.of("amber-lib", "modules", moduleFile.getFileName().toString()));
+            }
+
+            moduleJarDependencies.addAll(amber.bootstrap(bootstrapOptions));
         } catch (Exception exception) {
             log.error("Failed to bootstrap module: {}", moduleFile.getFileName(), exception);
             return Optional.empty();
@@ -224,17 +217,16 @@ public final class ModuleManager {
                 if (moduleConfigClass != null) {
                     final var moduleConfigBeanName = moduleConfigClass.getSimpleName();
                     log.debug("Adding module config class {} to sigewine", moduleConfigClass);
-                    // FIXME: Better way to create bean definition
-                    final var beanDefinition = new BeanDefinition(moduleConfigBeanName, moduleConfigClass, null);
-                    ModularBot.getSigewine().getSingletonBeans().put(beanDefinition, moduleConfig);
+                    var beanDefinition = new BeanDefinition(moduleConfigBeanName, moduleConfigClass, null);
+                    sigewine.registerBean(beanDefinition, moduleConfig);
                 }
 
-                final var modulePackagePath = Optional.ofNullable(moduleInfo.getSigewinePackagePath()).orElse(mainClass.getPackageName());
+                var modulePackagePath = Optional.ofNullable(moduleInfo.getSigewinePackagePath()).orElse(mainClass.getPackageName());
                 log.info("Module {} requires Sigewine, treating its package {} (class loader {})...", moduleInfo.getName(), modulePackagePath, mainClass.getClassLoader());
-                ModularBot.getSigewine().treatment(modulePackagePath, moduleClassLoader);
+                sigewine.scan(modulePackagePath, moduleClassLoader);
 
                 log.info("Syringing main class {} for module {}...", mainClass.getCanonicalName(), moduleInfo.getName());
-                module = (Module<?>) ModularBot.getSigewine().syringe(mainClass);
+                module = (Module<?>) sigewine.inject(mainClass);
             } else {
                 // Just create new instance of the module, w/o sigewine
                 module = (Module<?>) moduleClassLoader.loadClass(moduleInfo.getMainClass()).getConstructor().newInstance();

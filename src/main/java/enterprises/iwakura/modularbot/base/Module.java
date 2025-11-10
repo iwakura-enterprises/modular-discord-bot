@@ -83,15 +83,6 @@ public abstract class Module<TConfig extends ModuleConfig> {
     }
 
     /**
-     * Gets a list of all Irminsul entities (JPA-like entities) used by this module. These will be registered automatically.
-     *
-     * @return Non-null list of JPA entities
-     */
-    public List<Class<?>> getIrminsulEntities() {
-        return List.of();
-    }
-
-    /**
      * Sets the module configuration. This is called by Modular Bot itself.
      *
      * @param moduleConfig Non-null {@link ModuleConfig}
