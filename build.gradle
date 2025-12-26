@@ -7,7 +7,7 @@ plugins {
     id 'jacoco'
     id 'jacoco-report-aggregation'
     id "tech.medivh.plugin.publisher" version "1.2.3"
-    id 'enterprises.iwakura.amber' version '1.0.0'
+    id 'enterprises.iwakura.amber' version '1.1.1'
 }
 
 apply plugin: 'enterprises.iwakura.amber'
@@ -32,9 +32,9 @@ dependencies {
     amber 'pw.chew:jda-chewtils:2.1'
 
     // Personal libraries
-    implementation 'enterprises.iwakura:amber-core:1.0.2'
+    implementation 'enterprises.iwakura:amber-core:1.0.4'
     amber 'enterprises.iwakura:jda-interactables:2.1.2'
-    amber 'enterprises.iwakura:ganyu:1.0.0'
+    amber 'enterprises.iwakura:ganyu:1.1.1'
     amber 'enterprises.iwakura:keqing-core:1.1.1'
     amber 'enterprises.iwakura:keqing-gson:1.1.1'
     amber 'enterprises.iwakura:keqing-snakeyaml:1.1.1'
@@ -42,12 +42,18 @@ dependencies {
     amber 'enterprises.iwakura:sigewine-aop:2.3.1'
     amber 'enterprises.iwakura:sigewine-aop-sentry:2.3.1'
     amber 'enterprises.iwakura:irminsul:0.2.0'
+    amber 'enterprises.iwakura:jean-core:1.1.1'
+    amber 'enterprises.iwakura:jean-gson:1.1.1'
+    amber 'enterprises.iwakura:jean-snakeyaml:1.1.1'
+    amber 'enterprises.iwakura:jean-jtoml:1.1.1'
     amber 'dev.mayuna:mayus-library:3.1'
     amber 'dev.mayuna:mayus-json-utilities:2.1'
 
-    // GSON, Snakeyaml
+    // GSON, Snakeyaml, JToml
     amber 'com.google.code.gson:gson:2.13.1'
     amber 'org.yaml:snakeyaml:2.4'
+    amber 'io.github.wasabithumb:jtoml:1.4.0'
+    amber 'io.github.wasabithumb:jtoml-serializer-reflect:1.4.0'
 
     // Guava
     amber 'com.google.guava:guava:33.4.8-jre'
@@ -142,7 +148,7 @@ shadowJar {
     archiveBaseName.set('modular-discord-bot')
 
     manifest {
-        attributes 'Main-Class': 'enterprises.iwakura.modularbot.BootstrapMain'
+        attributes 'Main-Class': 'enterprises.iwakura.modularbot.AmberMain'
     }
 
     archiveVersion.set(version)

@@ -1,22 +1,18 @@
 package enterprises.iwakura.modularbot.managers;
 
-import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.jagrosh.jdautilities.command.CommandClientBuilder;
 import enterprises.iwakura.amber.Amber;
 import enterprises.iwakura.amber.BootstrapOptions;
 import enterprises.iwakura.ganyu.Ganyu;
-import enterprises.iwakura.modularbot.ModularBot;
-import enterprises.iwakura.modularbot.ModularBotConfig;
+import enterprises.iwakura.modularbot.config.ModularBotConfig;
 import enterprises.iwakura.modularbot.ModularBotConstants;
 import enterprises.iwakura.modularbot.amber.ModuleAmberLogger;
 import enterprises.iwakura.modularbot.base.Module;
 import enterprises.iwakura.modularbot.classloader.ModuleClassLoader;
-import enterprises.iwakura.modularbot.config.ModuleConfig;
 import enterprises.iwakura.modularbot.objects.ModuleInfo;
 import enterprises.iwakura.modularbot.objects.ModuleStatus;
 import enterprises.iwakura.modularbot.util.InputStreamUtils;
-import enterprises.iwakura.sigewine.core.BeanDefinition;
 import enterprises.iwakura.sigewine.core.Sigewine;
 import enterprises.iwakura.sigewine.core.annotations.Bean;
 import lombok.RequiredArgsConstructor;
@@ -44,14 +40,14 @@ public final class ModuleManager {
     private final Sigewine sigewine;
 
     private final List<ClassLoader> moduleClassLoaders = Collections.synchronizedList(new LinkedList<>());
-    private final List<Module<?>> modules = Collections.synchronizedList(new LinkedList<>());
+    private final List<Module> modules = Collections.synchronizedList(new LinkedList<>());
 
     /**
      * Returns list of loaded modules in memory.
      *
      * @return List of modules
      */
-    public List<Module<?>> getModules() {
+    public List<Module> getModules() {
         return modules;
     }
 
@@ -62,7 +58,7 @@ public final class ModuleManager {
      *
      * @return Optional of {@link Module}
      */
-    public Optional<Module<?>> getModuleByName(String name) {
+    public Optional<Module> getModuleByName(String name) {
         return modules.stream().filter(module -> module.getModuleInfo().getName().equalsIgnoreCase(name)).findFirst();
     }
 
@@ -125,17 +121,22 @@ public final class ModuleManager {
         }
 
         for (Path moduleFile : moduleFiles) {
-            Optional<Module<?>> optionalModule = loadModuleFile(moduleFile);
+            Optional<Module> optionalModule = loadModuleFile(moduleFile);
 
             // Could not load module, error logged
             if (optionalModule.isEmpty()) {
+                if (modularBotConfig.getModules().isCrashOnModuleLoadFailure()) {
+                    return false;
+                }
                 continue;
             }
 
-            Module<?> module = optionalModule.get();
+            Module module = optionalModule.get();
 
             // Load the module
-            loadModule(module);
+            if (!loadModule(module) && modularBotConfig.getModules().isCrashOnModuleLoadFailure()) {
+                return false;
+            }
         }
 
         return true;
@@ -148,7 +149,7 @@ public final class ModuleManager {
      *
      * @return Optional of {@link Module}
      */
-    private Optional<Module<?>> loadModuleFile(Path moduleFile) {
+    private Optional<Module> loadModuleFile(Path moduleFile) {
         log.info("Loading module: {}", moduleFile.getFileName());
         ModuleClassLoader moduleClassLoader;
 
@@ -179,6 +180,9 @@ public final class ModuleManager {
             return Optional.empty();
         }
 
+        var lastThreadClassLoader = Thread.currentThread().getContextClassLoader();
+        Thread.currentThread().setContextClassLoader(moduleClassLoader);
+
         try (ZipFile zipFile = new ZipFile(moduleFile.toFile())) {
             InputStream moduleInfoInputStream = InputStreamUtils.openFileAsInputStream(zipFile, ModularBotConstants.FILE_NAME_MODULE_INFO);
 
@@ -190,51 +194,30 @@ public final class ModuleManager {
             String moduleInfoFileContent = InputStreamUtils.readStreamAsString(moduleInfoInputStream);
             ModuleInfo moduleInfo = ModuleInfo.loadFromJsonObject(JsonParser.parseString(moduleInfoFileContent).getAsJsonObject());
 
-            Class<?> moduleConfigClass = null;
-            ModuleConfig moduleConfig = null;
-            if (moduleInfo.getConfigClass() != null) {
-                moduleConfigClass = moduleClassLoader.loadClass(moduleInfo.getConfigClass());
-
-                if (!ModuleConfig.class.isAssignableFrom(moduleConfigClass)) {
-                    log.error("Module {} specified config class {} which does not extend ModuleConfig!", moduleInfo.getName(), moduleInfo.getConfigClass());
-                    return Optional.empty();
-                }
-
-                log.info("Loading configuration for module {}...", moduleInfo.getName());
-                moduleConfig = (ModuleConfig) moduleConfigClass.getConstructor(ModuleInfo.class, String.class).newInstance(moduleInfo, ModularBotConstants.PATH_FOLDER_MODULES.toString());
-                moduleConfig.register();
-                moduleConfig.copyResourceConfigs(moduleClassLoader);
-            } else {
-                log.warn("Module {} does not specify a config class, proceeding without configuration...", moduleInfo.getName());
-            }
-
-            Module<?> module;
+            Module module;
 
             // Load module with sigewine
             if (moduleInfo.isSigewineRequired()) {
                 var mainClass = moduleClassLoader.loadClass(moduleInfo.getMainClass());
-
-                if (moduleConfigClass != null) {
-                    final var moduleConfigBeanName = moduleConfigClass.getSimpleName();
-                    log.debug("Adding module config class {} to sigewine", moduleConfigClass);
-                    var beanDefinition = new BeanDefinition(moduleConfigBeanName, moduleConfigClass, null);
-                    sigewine.registerBean(beanDefinition, moduleConfig);
-                }
 
                 var modulePackagePath = Optional.ofNullable(moduleInfo.getSigewinePackagePath()).orElse(mainClass.getPackageName());
                 log.info("Module {} requires Sigewine, treating its package {} (class loader {})...", moduleInfo.getName(), modulePackagePath, mainClass.getClassLoader());
                 sigewine.scan(modulePackagePath, moduleClassLoader);
 
                 log.info("Syringing main class {} for module {}...", mainClass.getCanonicalName(), moduleInfo.getName());
-                module = (Module<?>) sigewine.inject(mainClass);
+                module = (Module) sigewine.inject(mainClass);
             } else {
                 // Just create new instance of the module, w/o sigewine
-                module = (Module<?>) moduleClassLoader.loadClass(moduleInfo.getMainClass()).getConstructor().newInstance();
+                module = (Module) moduleClassLoader.loadClass(moduleInfo.getMainClass()).getConstructor().newInstance();
             }
 
             module.setModuleInfo(moduleInfo);
             module.setModuleStatus(ModuleStatus.NOT_LOADED);
-            module.setModuleConfig(moduleConfig);
+            module.setModuleFilePath(moduleFile);
+            module.setModuleDirectoryPath(moduleFile.getParent().resolve(moduleInfo.getName()));
+
+            // Make sure module directory exists
+            Files.createDirectories(module.getModuleDirectoryPath());
 
             // Add the module's class loader to the list of class loaders
             synchronized (moduleClassLoaders) {
@@ -250,6 +233,8 @@ public final class ModuleManager {
             log.error("Could not create module instance for module: {} (does the main class have public no-args constructor?)", moduleFile.getFileName(), exception);
         } catch (Throwable exception) {
             log.error("Failed to load module: {}", moduleFile.getFileName(), exception);
+        } finally {
+            Thread.currentThread().setContextClassLoader(lastThreadClassLoader);
         }
 
         return Optional.empty();
@@ -260,12 +245,12 @@ public final class ModuleManager {
      *
      * @param module Module to load
      */
-    public void loadModule(Module<?> module) {
+    public boolean loadModule(Module module) {
         String moduleName = module.getModuleInfo().getName();
 
         if (module.getModuleStatus() != ModuleStatus.NOT_LOADED) {
             log.warn("Tried loading module {}, which does not have status of NOT_LOADED!", moduleName);
-            return;
+            return false;
         }
 
         log.info("Loading module {}...", moduleName);
@@ -281,21 +266,22 @@ public final class ModuleManager {
             synchronized (moduleClassLoaders) {
                 moduleClassLoaders.remove(module.getClass().getClassLoader());
             }
-            return;
+            return false;
         }
 
         log.info("Module {} loaded successfully.", moduleName);
         module.setModuleStatus(ModuleStatus.LOADED);
         modules.add(module);
+        return true;
     }
 
     /**
      * Enables all loaded modules in memory.
      */
-    public void enableModules() {
+    public boolean enableModules() {
         log.info("Enabling {} modules...", modules.size());
 
-        modules.forEach(module -> {
+        for (Module module : modules) {
             try {
                 enableModule(module);
             } catch (StackOverflowError stackOverflowError) {
@@ -305,17 +291,25 @@ public final class ModuleManager {
 
                 log.error("StackOverflowError occurred while loading module {}! It depends on {}, soft-depends on {}", moduleName, depend, softDepend);
                 unloadModule(module);
+                return false;
             }
-        });
+        }
 
         log.debug("Unloading modules that failed to enable, if any...");
-        modules.forEach(module -> {
+        boolean unloadedAnyModule = false;
+        for (Module module : modules) {
             if (module.getModuleStatus() != ModuleStatus.ENABLED) {
                 unloadModule(module);
+                unloadedAnyModule = true;
             }
-        });
+        }
+
+        if (unloadedAnyModule) {
+            return false;
+        }
 
         log.info("Enabled {} modules successfully.", modules.size());
+        return true;
     }
 
     /**
@@ -323,7 +317,7 @@ public final class ModuleManager {
      *
      * @param module Module to enable
      */
-    public void enableModule(Module<?> module) {
+    public void enableModule(Module module) {
         if (module.getModuleStatus() == ModuleStatus.ENABLED) {
             return;
         }
@@ -332,7 +326,7 @@ public final class ModuleManager {
 
         // Depend
         for (String dependentName : moduleInfo.getDepend()) {
-            Optional<Module<?>> optionalDependentModule = getModuleByName(dependentName);
+            Optional<Module> optionalDependentModule = getModuleByName(dependentName);
 
             if (optionalDependentModule.isEmpty()) {
                 log.error("Module {} specified {} as dependent but the module is not loaded!", moduleInfo.getName(), dependentName);
@@ -344,7 +338,7 @@ public final class ModuleManager {
 
         // Soft-depend
         for (String dependentModule : moduleInfo.getSoftDepend()) {
-            Optional<Module<?>> optionalDependentModule = getModuleByName(dependentModule);
+            Optional<Module> optionalDependentModule = getModuleByName(dependentModule);
 
             if (optionalDependentModule.isEmpty()) {
                 log.warn("Module {} specified {} as soft-dependent but the module is not loaded.", moduleInfo.getName(), dependentModule);
@@ -362,6 +356,7 @@ public final class ModuleManager {
         } catch (Exception exception) {
             log.error("Failed to enable module {}!", moduleInfo.getName(), exception);
             unloadModule(module);
+            // TODO: Shutdown the bot
             return;
         }
 
@@ -387,7 +382,7 @@ public final class ModuleManager {
      *
      * @param module Module to unload
      */
-    public void unloadModule(Module<?> module) {
+    public void unloadModule(Module module) {
         String moduleName = module.getModuleInfo().getName();
 
         switch (module.getModuleStatus()) {

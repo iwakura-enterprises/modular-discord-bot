@@ -5,7 +5,7 @@ import enterprises.iwakura.amber.BootstrapOptions;
 
 import java.io.IOException;
 
-public class BootstrapMain {
+public class AmberMain {
 
     public static void main(String[] args) throws IOException {
         System.out.println("Bootstrapping Modular Bot's dependencies...");

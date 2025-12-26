@@ -1,19 +1,23 @@
 package enterprises.iwakura.modularbot;
 
 import dev.mayuna.mayuslibrary.exceptionreporting.UncaughtExceptionReporter;
+import enterprises.iwakura.modularbot.config.ModularBotConfig;
 import enterprises.iwakura.modularbot.managers.ModuleManager;
 import enterprises.iwakura.ganyu.Ganyu;
 import enterprises.iwakura.sigewine.core.Sigewine;
 import enterprises.iwakura.sigewine.core.SigewineOptions;
 import enterprises.iwakura.sigewine.core.annotations.Bean;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import net.dv8tion.jda.api.JDA;
 
 @Getter
 @Setter
 @Slf4j
 @Bean
+@RequiredArgsConstructor
 public final class ModularBot {
 
     private static final Sigewine sigewine = new Sigewine(SigewineOptions.builder().build());
@@ -27,19 +31,6 @@ public final class ModularBot {
     private boolean running;
     private boolean stopping;
 
-    public ModularBot(
-            Ganyu ganyu,
-            ModularBotShardManager modularBotShardManager,
-            ModularBotConfig config,
-            ModuleManager moduleManager) {
-        this.ganyu = ganyu;
-        this.modularBotShardManager = modularBotShardManager;
-        this.config = config;
-        this.moduleManager = moduleManager;
-
-        instance = this;
-    }
-
     /**
      * Returns the singleton instance of ModularBot
      *
@@ -50,6 +41,8 @@ public final class ModularBot {
     }
 
     public void start(String[] args) {
+        instance = this;
+
         log.info("Starting ModularDiscordBot @ {}", ModularBotConstants.getVersion());
         log.info("Made by Mayuna");
 
@@ -158,7 +151,8 @@ public final class ModularBot {
      * Loads modules
      */
     private void loadModules() {
-        if (!moduleManager.loadModules()) {
+        if (!moduleManager.loadModules() && config.getModules().isCrashOnModuleLoadFailure()) {
+            log.warn("Some module failed to load and modules#crashOnModuleLoadFailure is enabled. Shutting down...");
             shutdown();
         }
     }
@@ -167,7 +161,10 @@ public final class ModularBot {
      * Enables modules
      */
     private void enableModules() {
-        moduleManager.enableModules();
+        if (!moduleManager.enableModules() && config.getModules().isCrashOnModuleLoadFailure()) {
+            log.warn("Some module failed to enable and modules#isCrashOnModuleLoadFailure is enabled. Shutting down...");
+            shutdown();
+        }
     }
 
     /**

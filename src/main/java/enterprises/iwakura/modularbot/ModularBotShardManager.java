@@ -2,6 +2,7 @@ package enterprises.iwakura.modularbot;
 
 import com.jagrosh.jdautilities.command.CommandClientBuilder;
 import enterprises.iwakura.jdainteractables.InteractableListener;
+import enterprises.iwakura.modularbot.config.ModularBotConfig;
 import enterprises.iwakura.modularbot.managers.ModuleManager;
 import enterprises.iwakura.modularbot.objects.ModuleStatus;
 import enterprises.iwakura.modularbot.objects.activity.ModuleActivity;

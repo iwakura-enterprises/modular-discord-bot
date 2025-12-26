@@ -31,7 +31,7 @@ public final class ModularConsoleCommand implements GanyuCommand {
     @Description("Shows all modules")
     public void showAllModules() {
         ModuleManager moduleManager = modularBotAccessor.getBeanInstance().getModuleManager();
-        List<Module<?>> modules = moduleManager.getModules();
+        List<Module> modules = moduleManager.getModules();
 
         log.info("== Modules - {} ==", modules.size());
         modules.forEach(module -> {
@@ -47,14 +47,14 @@ public final class ModularConsoleCommand implements GanyuCommand {
     @Description("Shows information about shards")
     @Syntax("[verbose]")
     public void showShards(
-            @OptionalArg Boolean verbose
+            @OptionalArg @Description("Whenever should show verbose information about shares (guilds and users)") Boolean verbose
     ) {
         ShardManager shardManager = modularBotAccessor.getBeanInstance().getModularBotShardManager().get();
 
         log.info("== Shard Info ==");
         log.info("Total shards: {}", shardManager.getShardsTotal());
 
-        if (!verbose) {
+        if (!Boolean.TRUE.equals(verbose)) {
             return;
         }
 

@@ -16,7 +16,6 @@ public final class ModuleInfo {
 
     private final String name;
     private final String mainClass;
-    private final String configClass;
     private final String author;
     private final String version;
     private final boolean sigewineRequired;
@@ -45,7 +44,6 @@ public final class ModuleInfo {
         }
 
         String name = jsonObject.get("name").getAsString();
-        String configClass = jsonObject.has("configClass") ? jsonObject.get("configClass").getAsString() : null;
         String author = jsonObject.has("author") ? jsonObject.get("author").getAsString() : "Unknown author";
         String version = jsonObject.has("version") ? jsonObject.get("version").getAsString() : "Unknown version";
         String mainClass = jsonObject.get("mainClass").getAsString();
@@ -57,7 +55,7 @@ public final class ModuleInfo {
         String[] loadBefore = jsonObject.has("loadBefore") ? jsonArrayToStringArray(jsonObject.getAsJsonArray("loadBefore")) : new String[0];
         String[] exceptionHandlingPackages = jsonObject.has("exceptionHandlingPackages") ? jsonArrayToStringArray(jsonObject.getAsJsonArray("exceptionHandlingPackages")) : new String[0];
 
-        return new ModuleInfo(name, mainClass, configClass, author, version, sigewineRequired, sigewinePackagePath, depend, softDepend, loadBefore, exceptionHandlingPackages);
+        return new ModuleInfo(name, mainClass, author, version, sigewineRequired, sigewinePackagePath, depend, softDepend, loadBefore, exceptionHandlingPackages);
     }
 
     private static String[] jsonArrayToStringArray(JsonArray jsonArray) {
